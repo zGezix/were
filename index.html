@@ -109,6 +109,8 @@ details.team .roles-list{margin-top:10px}
 .seat.dead{opacity:.5}
 .seat.dead .nm{text-decoration:line-through}
 .seat.ally{border-color:rgba(212,71,79,.6)}
+.seat.victim{border-color:var(--blood);box-shadow:0 0 0 2px var(--blood) inset,0 0 24px rgba(212,71,79,.45);animation:victim 1.2s ease-in-out infinite}
+@keyframes victim{50%{box-shadow:0 0 0 2px var(--blood) inset,0 0 8px rgba(212,71,79,.2)}}
 .av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:20px;color:#0e1120}
 .nm{font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;min-height:20px}
@@ -1113,9 +1115,12 @@ function render(S){
   if (S.ph === 'lobby') { bh = 'รอชาวบ้านมารวมตัว'; bp.push(solo ? 'โหมดฝึก: คุณเล่นกับบอท ปรับบทบาทและจำนวนบอทได้ที่แผงตั้งค่าเกม' : `ส่งรหัส <b class="big">${esc(code)}</b> หรือกด "คัดลอกลิงก์" ส่งให้เพื่อน แล้วโฮสต์กดเริ่มเกมเมื่อพร้อม · อย่างน้อย 4 คน`); }
   else if (S.ph === 'night') {
     bh = S.ns === 2 ? `คืนที่ ${r} · ใกล้รุ่งสาง` : `คืนที่ ${r} · หมู่บ้านหลับใหล`;
+    const witchTurn = myRole === 'witch' && S.ns === 2 && myNeed;
+    if (witchTurn) bh = (S.wv || []).length ? `หมาป่าเลือกขย้ำ ${S.wv.map(v => N(v)).join(' และ ')}` : `คืนที่ ${r} · หมาป่าไม่ได้ฆ่าใคร`;
     const vr = S.vr && S.vr.r === r - 1 ? S.vr : null;
     if (vr) bp.push(!vr.o ? 'ผลโหวตล่าสุด: ไม่มีใครถูกประหาร' : vr.n === 'p' ? `ผลโหวตล่าสุด: ${N(vr.o)} เปิดตัวเป็นเจ้าชายและรอดจากการประหาร` : vr.n === 'b' ? `ผลโหวตล่าสุด: ${N(vr.o)} รอดเพราะได้รับพรจากบาทหลวง` : `ผลโหวตล่าสุด: ประหาร ${list(vr.d)}`);
     else bp.push('บทบาทที่มีพลังกำลังลงมือในความมืด');
+    if (witchTurn) { bp.length = 0; bp.push((S.wv || []).length ? 'แม่มดตื่นขึ้น: กดปุ่ม "ใช้ยาช่วย" เพื่อชุบชีวิต หรือแตะการ์ดคนอื่นเพื่อใช้ยาพิษ (ใช้ได้ครั้งเดียวทั้งเกม)' : 'แม่มดตื่นขึ้น: แตะการ์ดเพื่อใช้ยาพิษ หรือกด "ไม่ใช้พลังคืนนี้"'); }
   } else if (S.ph === 'day') {
     const nw = S.nw && S.nw.r === r ? S.nw : null;
     bh = nw && nw.d.length ? `เช้าวันที่ ${r} · พบศพ ${nw.d.length} ราย` : `เช้าวันที่ ${r} · คืนนี้ไม่มีใครตาย`;
@@ -1167,6 +1172,7 @@ function render(S){
       if (S.dop && S.dop.m === p.i && (ghost || S.dop.p === me.pid)) tags.push('<span class="tag info">ถูกเลียนแบบ</span>');
       if ((S.ph === 'day' || S.ph === 'vote') && !dead && ((S.ex && S.ex.r === r && S.ex.p === p.i) || (S.sil && S.sil.r === r && S.sil.p === p.i))) tags.push('<span class="tag info">ห้ามพูด</span>');
       if (S.ph === 'day' && !dead && (p.b || (S.rdy || []).includes(p.i))) tags.push('<span class="tag ok">พร้อมโหวต</span>');
+      if (myRole === 'witch' && S.ph === 'night' && S.ns === 2 && (S.wv || []).includes(p.i)) tags.push('<span class="tag wolf">เหยื่อหมาป่า</span>');
       if (dead) tags.push('<span class="tag">ตายแล้ว</span>');
     }
     let under = '';
@@ -1174,7 +1180,8 @@ function render(S){
     if (wolfPicks[p.i]) under = 'เป้าของ ' + wolfPicks[p.i].map(v => esc(nameOf(S, v))).join(', ');
     const can = seatOpts.includes(p.i);
     const ally = !isMe && packView && isPack(ro) && S.ph !== 'lobby';
-    return `<div data-pid="${esc(p.i)}" class="seat${can?' can':''}${picked.includes(p.i)?' picked':''}${dead?' dead':''}${ally?' ally':''}" ${can?`tabindex="0" role="button" data-t="${esc(p.i)}" aria-label="เลือก ${esc(p.n)}"`:''}>
+    const victim = myRole === 'witch' && S.ph === 'night' && S.ns === 2 && (S.wv || []).includes(p.i);
+    return `<div data-pid="${esc(p.i)}" class="seat${can?' can':''}${picked.includes(p.i)?' picked':''}${dead?' dead':''}${ally?' ally':''}${victim?' victim':''}" ${can?`tabindex="0" role="button" data-t="${esc(p.i)}" aria-label="เลือก ${esc(p.n)}"`:''}>
       ${votes[p.i] ? `<span class="count">${votes[p.i].length}</span>` : ''}<div class="av" style="background:hsl(${hue(p.i)} 55% 72%)">${esc([...p.n][0] || '?')}</div>
       <div class="nm">${esc(p.n)}</div><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div class="tags">${tags.join('')}</div><div class="voters">${under}</div><div class="say"></div></div>`;
   }).join('') || '<div class="muted">ยังไม่มีใครในห้อง</div>';
