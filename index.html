@@ -1,0 +1,1731 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="คืนหมาป่า เกมมนุษย์หมาป่าออนไลน์ เล่นกับเพื่อน พร้อมคุยด้วยเสียง">
+<title>คืนหมาป่า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Trirong:wght@600;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: a night-village table — players sit in a grid of seats, your role card and the moderator's log sit beside them; stacks to one column on phones. Single committed night look. */
+:root{
+  --ink:#0e1120; --ink-2:#161a2c; --ink-3:#1f2440; --line:#2c3256;
+  --moon:#ece6d3; --dim:#959bb8; --lantern:#e9a948; --lantern-ink:#2a1a04;
+  --blood:#d4474f; --leaf:#72b894; --mist:#8fa3ff;
+  --f-display:"Trirong","Noto Serif Thai",Georgia,serif;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+  color-scheme:dark;
+}
+body[data-ph="day"]{--ink:#1b2037;--ink-2:#232946;--ink-3:#2c3354;--line:#3b4370}
+body{background:var(--ink);color:var(--moon);font-family:var(--f-body);font-size:15px;line-height:1.6;transition:background .8s}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.25}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--ink-3);border-radius:10px;padding:9px 16px;transition:transform .1s,background .2s,border-color .2s}
+button:hover:not(:disabled){border-color:var(--dim)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,.seat:focus-visible{outline:2px solid var(--lantern);outline-offset:2px}
+.btn-main{background:var(--lantern);color:var(--lantern-ink);border-color:var(--lantern);font-weight:600}
+.btn-main:hover:not(:disabled){filter:brightness(1.08);border-color:var(--lantern)}
+.btn-ghost{background:transparent}
+.btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
+input[type=text]{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+.label{font-size:12px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.muted{color:var(--dim)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Home */
+.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding-block:28px 32px}
+.hero h1{font-size:clamp(40px,8vw,68px);font-weight:800;letter-spacing:-.01em}
+.hero h1 span{color:var(--lantern)}
+.hero p{max-width:46ch;color:var(--dim);margin:10px 0 0}
+.moon{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#fffbea 0,#ece6d3 45%,#bdb59a 100%);box-shadow:0 0 60px 10px rgba(236,230,211,.18);position:relative}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 70% 60%,rgba(0,0,0,.12) 0 9%,transparent 10%),radial-gradient(circle at 40% 72%,rgba(0,0,0,.1) 0 6%,transparent 7%)}
+.skyline{display:block;width:100%;height:56px;color:var(--ink-3);margin-bottom:24px}
+.home-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.panel{background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{font-size:22px}
+.split{display:grid;grid-template-columns:1fr auto;gap:10px}
+.codein{text-transform:uppercase;letter-spacing:.3em;font-weight:600;text-align:center}
+.rooms{display:flex;flex-direction:column;gap:8px}
+.roomrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px}
+.roles-list{display:grid;gap:10px}
+.role-line{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.role-line b{font-weight:600}
+.ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--ink-3)}
+.ico svg{width:22px;height:22px}
+.t-wolf{color:var(--blood)} .t-village{color:var(--leaf)} .t-solo{color:var(--mist)}
+.tag.solo{background:rgba(143,163,255,.15);color:var(--mist)}
+.tag.info{background:rgba(233,169,72,.14);color:var(--lantern)}
+details.team{border-top:1px solid var(--line);padding-top:10px}
+details.team summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:17px;list-style:none;display:flex;justify-content:space-between}
+details.team summary::after{content:"+";color:var(--dim)}
+details.team[open] summary::after{content:"−"}
+details.team .roles-list{margin-top:10px}
+.rp-group{display:flex;flex-direction:column;gap:6px}
+.rp-grid{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:4px 10px;border-radius:999px;background:transparent}
+.chip.on{background:var(--lantern);color:var(--lantern-ink);border-color:var(--lantern)}
+.chip-step{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:13px}
+.chip-step.on{border-color:var(--lantern)}
+.chip-step button{padding:0 8px;border-radius:999px;font-size:13px;line-height:22px}
+.chip-step b{min-width:1.5ch;text-align:center;font-variant-numeric:tabular-nums}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.result{font-weight:600}
+.notice{border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--dim)}
+
+/* Game */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:12px;border-bottom:1px solid var(--line);margin-bottom:18px;transition:background .8s}
+.code{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.18em}
+.phase{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:var(--ink-3);font-weight:500}
+.phase .dot{width:8px;height:8px;border-radius:50%;background:var(--mist)}
+.phase[data-ph="day"] .dot,.phase[data-ph="vote"] .dot{background:var(--lantern)}
+.phase[data-ph="hunter"] .dot,.phase[data-ph="end"] .dot{background:var(--blood)}
+.timer{font-variant-numeric:tabular-nums;font-weight:600;font-size:18px;min-width:3.2em}
+.timer.low{color:var(--blood)}
+.spacer{flex:1}
+.conn{font-size:12px;color:var(--dim)}
+.banner{padding:18px 20px;border-radius:16px;background:linear-gradient(180deg,var(--ink-3),var(--ink-2));border:1px solid var(--line);margin-bottom:18px}
+.banner h2{font-size:clamp(22px,4vw,30px)}
+.banner p{margin:6px 0 0;color:var(--dim)}
+.banner .big{color:var(--moon)}
+.game-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:12px}
+.seat{position:relative;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0;transition:border-color .2s,transform .15s,opacity .3s}
+.seat.can{cursor:pointer}
+.seat.can:hover{border-color:var(--lantern);transform:translateY(-2px)}
+.seat.picked{border-color:var(--lantern);box-shadow:0 0 0 2px var(--lantern) inset}
+.seat.dead{opacity:.5}
+.seat.dead .nm{text-decoration:line-through}
+.seat.ally{border-color:rgba(212,71,79,.6)}
+.av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:20px;color:#0e1120}
+.nm{font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;min-height:20px}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--ink-3);color:var(--dim);white-space:nowrap}
+.tag.me{background:var(--lantern);color:var(--lantern-ink)}
+.tag.wolf{background:rgba(212,71,79,.18);color:var(--blood)}
+.tag.vil{background:rgba(114,184,148,.15);color:var(--leaf)}
+.tag.ok{color:var(--leaf)}
+.voters{font-size:12px;color:var(--lantern);min-height:18px;line-height:1.35;max-width:100%;overflow-wrap:anywhere}
+.count{position:absolute;top:8px;right:8px;min-width:24px;height:24px;border-radius:12px;background:var(--lantern);color:var(--lantern-ink);font-weight:600;font-size:13px;display:grid;place-items:center;padding:0 6px}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.rolecard{border-radius:16px;border:1px solid var(--line);background:var(--ink-2);padding:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.rolecard .rhead{display:flex;gap:12px;align-items:center}
+.rolecard .ico{width:52px;height:52px;border-radius:14px}
+.rolecard .ico svg{width:32px;height:32px}
+.rolecard h3{font-size:24px}
+.rolecard.hide .rbody{filter:blur(9px);user-select:none}
+.prompt{border-radius:14px;padding:14px 16px;background:var(--ink-3);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.prompt b{color:var(--lantern);font-weight:600}
+.seerlist{font-size:14px;display:flex;flex-direction:column;gap:4px}
+.log{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.log div{padding-left:12px;border-left:2px solid var(--line)}
+.settings{display:grid;gap:10px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper span{min-width:2ch;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.chk{display:flex;gap:8px;align-items:center;cursor:pointer}
+.win{font-size:clamp(28px,6vw,44px)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--moon);color:var(--ink);padding:8px 16px;border-radius:999px;font-weight:500;z-index:20}
+
+
+/* Voice indicator + chat */
+.seat .say{font-size:12px;color:var(--moon);min-height:0;max-width:100%;overflow-wrap:anywhere;line-height:1.35;opacity:.85}
+.seat .say:empty{display:none}
+.seat .av{position:relative}
+.seat.tk .av::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--tk);box-shadow:0 0 18px var(--tk);animation:talk 1s ease-in-out infinite}
+.seat.tk{border-color:var(--tk)}
+.seat.tk-v{--tk:var(--leaf)} .seat.tk-w{--tk:var(--blood)} .seat.tk-g{--tk:var(--mist)}
+.wave{display:none;gap:2px;align-items:flex-end;height:14px}
+.seat.tk .wave{display:flex}
+.wave i{width:3px;background:var(--tk);border-radius:2px;animation:bar .7s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.15s}.wave i:nth-child(3){animation-delay:.3s}.wave i:nth-child(4){animation-delay:.45s}
+@keyframes talk{50%{transform:scale(1.08);opacity:.6}}
+@keyframes bar{0%,100%{height:3px}50%{height:14px}}
+.chat{margin-top:18px;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font-size:13px;padding:5px 12px;border-radius:999px;background:transparent}
+.tab.on{background:var(--ink-3);border-color:var(--dim)}
+.tab[data-ch="w"].on{border-color:var(--blood);color:var(--blood)}
+.tab[data-ch="g"].on{border-color:var(--mist);color:var(--mist)}
+.tab .dotn{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lantern);margin-left:6px;vertical-align:middle}
+.msgs{height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:14px;padding-right:4px}
+.msg b{font-weight:600;margin-right:6px}
+.msg.mine b{color:var(--lantern)}
+.chat-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.talkbtn{display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;-webkit-user-select:none;touch-action:none}
+.talkbtn.on{background:var(--leaf);color:var(--ink);border-color:var(--leaf)}
+.talkbtn.on.w{background:var(--blood);border-color:var(--blood);color:#fff}
+.talkbtn.on.g{background:var(--mist);border-color:var(--mist)}
+.lockline{font-size:13px;color:var(--dim)}
+
+.setbtn{display:inline-flex;align-items:center;gap:8px;background:var(--lantern);color:var(--lantern-ink);border-color:var(--lantern);font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 0 0 4px rgba(233,169,72,.18)}
+.setbtn:hover:not(:disabled){filter:brightness(1.08);border-color:var(--lantern)}
+.setbtn-home{position:absolute;top:0;right:0}
+.hero{position:relative}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(4,5,12,.72);display:grid;place-items:center;padding:20px max(16px,env(safe-area-inset-left,0px))}
+.sheet{width:min(520px,100%);max-height:min(86vh,760px);overflow:auto;background:var(--ink-2);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h2{font-size:26px}
+.sheet h3{font-size:17px;margin-bottom:8px}
+.sheet section{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;padding:7px 14px}
+.seg button.on{background:var(--lantern);color:var(--lantern-ink);font-weight:600}
+.kbd{font-family:ui-monospace,Menlo,monospace;background:var(--ink);border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 10px;font-weight:600}
+.keybtn.listen{border-color:var(--lantern);color:var(--lantern)}
+input[type=range]{width:100%;accent-color:var(--lantern)}
+.vol-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.vol-row output{font-variant-numeric:tabular-nums;min-width:3ch;text-align:right;font-weight:600}
+.pl-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0}
+.pl-row .who{display:flex;align-items:center;gap:10px;min-width:0}
+.pl-row .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;color:#0e1120;flex:none}
+.pl-row button.off{border-color:var(--blood);color:var(--blood)}
+.hint{font-size:13px;color:var(--dim)}
+
+.voicebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.micbtn{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:9px 14px;user-select:none;-webkit-user-select:none;touch-action:none}
+.micbtn.on{background:var(--leaf);border-color:var(--leaf);color:var(--ink)}
+.micbtn.off{border-color:var(--blood);color:var(--blood)}
+.micbtn .lvl{width:46px;height:6px;border-radius:3px;background:rgba(0,0,0,.25);overflow:hidden}
+.micbtn .lvl i,.meter i{display:block;height:100%;background:currentColor;transform-origin:left;transform:scaleX(0);transition:transform .08s linear}
+.kbd.small{font-size:11px;padding:0 6px;border-bottom-width:2px}
+#deafBtn.off{border-color:var(--blood);color:var(--blood)}
+select{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0;color:var(--moon)}
+select:disabled{opacity:.5}
+.meter{height:10px;border-radius:5px;background:var(--ink);border:1px solid var(--line);overflow:hidden;color:var(--leaf)}
+.pl-row{flex-wrap:wrap}
+.pl-ctl{display:flex;align-items:center;gap:8px;flex:1 1 220px;justify-content:flex-end}
+.pl-ctl input[type=range]{flex:1;min-width:90px}
+.pl-ctl output{min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
+
+/* Event overlay */
+@property --b{syntax:'<percentage>';inherits:true;initial-value:0%}
+.fx{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px));background:radial-gradient(ellipse at center,rgba(8,9,20,.82),rgba(4,5,12,.96));animation:fxin .35s ease}
+.fx-stage{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;max-width:100%}
+.fx-eyebrow{font-size:13px;letter-spacing:.2em;color:var(--lantern);text-transform:uppercase}
+.fx h2{font-size:clamp(26px,5.5vw,46px);font-weight:800}
+.fx p{margin:0;color:var(--dim);max-width:40ch}
+.fx-skip{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:31}
+.fx-cards{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+@keyframes fxin{from{opacity:0}}
+.fx-title-only h2{animation:rise 1.4s ease both}
+.fx-title-only.ph-night h2{color:var(--mist);text-shadow:0 0 30px rgba(143,163,255,.5)}
+.fx-title-only.ph-day h2{color:var(--lantern);text-shadow:0 0 30px rgba(233,169,72,.5)}
+.fx-title-only.ph-vote h2{color:var(--blood);text-shadow:0 0 30px rgba(212,71,79,.45)}
+@keyframes rise{0%{opacity:0;transform:translateY(16px) scale(.96);letter-spacing:.1em}30%,75%{opacity:1;transform:none;letter-spacing:0}100%{opacity:0}}
+.ncard{position:relative;width:170px;height:240px;border-radius:16px;background:linear-gradient(160deg,#f3ecd8,#d9cfb2);color:#2a2114;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+.ncard .av{width:76px;height:76px;font-size:30px}
+.ncard .nn{font-family:var(--f-display);font-weight:800;font-size:22px;padding:0 10px;overflow-wrap:anywhere}
+@keyframes pop{from{transform:scale(.6) rotate(-4deg);opacity:0}}
+.burnwrap{position:relative;width:170px;height:240px}
+.burnwrap .ncard{-webkit-mask-image:linear-gradient(to top,transparent var(--b),#000 calc(var(--b) + 7%));mask-image:linear-gradient(to top,transparent var(--b),#000 calc(var(--b) + 7%))}
+.burnwrap .ncard::before{content:"";position:absolute;left:0;right:0;bottom:var(--b);height:22%;background:linear-gradient(to top,#1a0800,rgba(60,20,0,.6) 40%,transparent);border-radius:inherit;pointer-events:none}
+.burnwrap.go .ncard{animation:burn 2.3s cubic-bezier(.5,0,.8,.6) .3s forwards}
+@keyframes burn{to{--b:108%}}
+.flames{position:absolute;left:-8%;right:-8%;bottom:-6%;height:70px;display:flex;justify-content:space-around;align-items:flex-end;opacity:0;pointer-events:none;filter:blur(1px)}
+.burnwrap.go .flames{animation:flamemove 2.3s cubic-bezier(.5,0,.8,.6) .3s forwards}
+@keyframes flamemove{0%{opacity:1;bottom:-6%}90%{opacity:1}100%{opacity:0;bottom:100%}}
+.flames i{width:26px;height:60px;border-radius:50% 50% 45% 45%/70% 70% 30% 30%;background:radial-gradient(ellipse at 50% 80%,#fff3b0 0,#ffb030 30%,#ff5a10 60%,rgba(255,60,0,0) 75%);transform-origin:50% 100%;animation:flick .35s ease-in-out infinite alternate;mix-blend-mode:screen}
+.flames i:nth-child(odd){height:44px;animation-duration:.27s}
+.flames i:nth-child(3n){height:70px;animation-duration:.42s}
+@keyframes flick{from{transform:scaleY(.8) scaleX(1.05) skewX(-4deg)}to{transform:scaleY(1.15) scaleX(.9) skewX(5deg)}}
+.ember{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffb347;box-shadow:0 0 6px #ff7a1a;pointer-events:none;animation:ember var(--d,1.6s) ease-out forwards}
+@keyframes ember{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--x,0),-160px)}}
+.claw{position:absolute;inset:0;pointer-events:none}
+.claw i{position:absolute;left:12%;width:110%;height:6px;background:linear-gradient(90deg,transparent,#8a0f16 20%,#d4474f 50%,#8a0f16 80%,transparent);border-radius:3px;transform-origin:left center;transform:rotate(38deg) scaleX(0);animation:slash .28s ease-out forwards;box-shadow:0 0 8px rgba(212,71,79,.7)}
+.claw i:nth-child(1){top:16%;animation-delay:.5s}.claw i:nth-child(2){top:30%;animation-delay:.62s}.claw i:nth-child(3){top:44%;animation-delay:.74s}
+@keyframes slash{to{transform:rotate(38deg) scaleX(.85)}}
+.ncard.hit{animation:pop .5s cubic-bezier(.2,1.4,.4,1) both,shake .4s .5s ease}
+@keyframes shake{25%{transform:translateX(-6px) rotate(-2deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px)}}
+.xhair{position:absolute;inset:-14px;pointer-events:none;border:2px solid var(--blood);border-radius:50%;animation:aim 1s ease-out forwards}
+.xhair::before,.xhair::after{content:"";position:absolute;background:var(--blood)}
+.xhair::before{left:50%;top:-10px;bottom:-10px;width:2px}
+.xhair::after{top:50%;left:-10px;right:-10px;height:2px}
+@keyframes aim{0%{transform:scale(2.4);opacity:0}70%{transform:scale(1);opacity:1}100%{transform:scale(.6);opacity:1}}
+.flash{position:fixed;inset:0;background:#fff;pointer-events:none;animation:flash .35s ease-out forwards}
+@keyframes flash{from{opacity:.85}to{opacity:0}}
+.shield{position:absolute;inset:-18px;border-radius:24px;border:3px solid var(--lantern);box-shadow:0 0 40px var(--lantern),inset 0 0 30px rgba(233,169,72,.4);animation:shield 1.6s ease-in-out infinite;pointer-events:none}
+@keyframes shield{50%{transform:scale(1.04);opacity:.7}}
+.c3d{width:170px;height:240px;perspective:1100px;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+.c3d .in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.3,1.3,.5,1)}
+.c3d .in.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:16px;-webkit-backface-visibility:hidden;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.face.back{background:radial-gradient(circle at 50% 42%,#ece6d3 0 15%,transparent 16%),radial-gradient(circle at 50% 42%,transparent 0 23%,rgba(233,169,72,.5) 24% 25%,transparent 26%),repeating-linear-gradient(45deg,#1b2040 0 10px,#151933 10px 20px);border:3px solid var(--lantern)}
+.face.back span{margin-top:120px;font-family:var(--f-display);font-weight:800;color:var(--lantern);letter-spacing:.2em;font-size:13px}
+.face.front{transform:rotateY(180deg);background:linear-gradient(170deg,var(--ink-3),var(--ink-2));border:3px solid var(--tc)}
+.face.front .big{width:64px;height:64px;color:var(--tc)}
+.face.front .big svg{width:100%;height:100%}
+.face.front h3{font-size:21px;color:var(--tc)}
+.face.front .who{font-size:13px;color:var(--dim)}
+.face.front .tm{font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--tc);color:var(--tc)}
+.tc-v{--tc:var(--leaf)} .tc-w{--tc:var(--blood)} .tc-s{--tc:var(--mist)}
+.endtitle{font-size:clamp(32px,7vw,60px)!important}
+.endtitle.v{color:var(--leaf)} .endtitle.w{color:var(--blood)} .endtitle.s{color:var(--mist)}
+.winners{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.fx-icon{width:72px;height:72px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.fx *{animation-duration:.01s!important}}
+
+@media (max-width:820px){
+  .game-grid,.home-grid{grid-template-columns:minmax(0,1fr)}
+  .ncard,.burnwrap,.c3d{width:132px;height:188px}
+  .setbtn-home{position:static;justify-self:start;order:-2}
+  .face.back span{margin-top:90px}
+  .ncard .av{width:58px;height:58px;font-size:24px}
+  .hero{grid-template-columns:1fr}
+  .moon{width:72px;height:72px;order:-1}
+  .seats{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  .av{width:42px;height:42px;font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section id="home">
+    <div class="hero">
+      <div>
+        <div class="label">เกมเล่นกับเพื่อน · 4–16 คน · 36 บทบาท · คุยด้วยเสียงในเกม</div>
+        <h1>คืน<span>หมาป่า</span></h1>
+        <p>ในหมู่บ้านมีมนุษย์หมาป่าปะปนอยู่ กลางคืนพวกมันออกล่า กลางวันชาวบ้านต้องถกเถียงและโหวตประหารคนที่น่าสงสัย ใครจะรอดถึงเช้า</p>
+      </div>
+      <div class="moon" aria-hidden="true"></div>
+      <button class="setbtn setbtn-home" id="setOpenHome" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>ตั้งค่า</button>
+    </div>
+    <svg class="skyline" viewBox="0 0 1000 56" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 56V40h40V28l20-14 20 14v12h30V34h24V20l14-10 14 10v20h40V30l26-18 26 18v10h50V36h18V22h6V12h6v10h6v18h40V30l18-12 18 12v10h60V32h28V16l22-14 22 14v20h40V38h36V26l16-10 16 10v14h52V30l24-16 24 16v12h40V34h22V20l14-10 14 10v24h44V32l20-14 20 14v10h60V36h30V24l16-10 16 10v16h40V56z"/></svg>
+
+    <div class="home-grid">
+      <div class="panel">
+        <h2>เข้าหมู่บ้าน</h2>
+        <div>
+          <label class="label" for="nameIn">ชื่อของคุณ</label>
+          <input id="nameIn" type="text" maxlength="16" placeholder="เช่น ต้น, มิ้ว, บอส" autocomplete="off">
+        </div>
+        <div id="rejoinBox" hidden class="notice"></div>
+        <div class="row">
+          <button id="createBtn" class="btn-main">สร้างห้องใหม่</button>
+          <button id="soloBtn" class="btn-ghost">ฝึกเล่นกับบอท</button>
+        </div>
+        <div>
+          <label class="label" for="codeIn">มีรหัสห้องจากเพื่อน</label>
+          <div class="split">
+            <input id="codeIn" class="codein" type="text" maxlength="4" placeholder="ABCD" autocomplete="off">
+            <button id="joinBtn">เข้าห้อง</button>
+          </div>
+        </div>
+        <div id="connNote" class="notice" hidden></div>
+      </div>
+      <div class="panel">
+        <h2>บทบาทในหมู่บ้าน</h2>
+        <div id="rolesList"></div>
+        <div class="notice">รอบคืน: บทบาทพิเศษเลือกเป้าหมายบนการ์ดผู้เล่น · รอบเช้า: คุยกันด้วยเสียงหรือแชท · รอบโหวต: คนที่ได้คะแนนมากสุดถูกประหาร ถ้าเสมอหรืองดออกเสียงมากกว่า จะไม่มีใครตาย</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="topbar">
+      <div>
+        <div class="label">รหัสห้อง</div>
+        <div class="code" id="gCode">----</div>
+      </div>
+      <button class="btn-sm btn-ghost" id="copyBtn">คัดลอกลิงก์</button>
+      <button class="setbtn" id="setOpen" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>ตั้งค่า</button>
+      <div class="phase" id="gPhase"><span class="dot"></span><span id="gPhaseTxt">ห้องรอ</span></div>
+      <div class="timer" id="gTimer"></div>
+      <div class="spacer"></div>
+      <span class="conn" id="gConn"></span>
+      <button class="btn-sm btn-ghost" id="leaveBtn">ออกจากห้อง</button>
+    </div>
+    <div class="banner" id="gBanner"></div>
+    <div class="game-grid">
+      <div>
+        <div class="seats" id="gSeats"></div>
+        <div class="chat" id="gChat">
+          <div class="row" style="justify-content:space-between"><div class="tabs" id="chatTabs"></div><span class="lockline" id="chatLock"></span></div>
+          <div class="msgs" id="chatMsgs" aria-live="polite"></div>
+          <form class="chat-row" id="chatForm" autocomplete="off"><input type="text" id="chatIn" maxlength="120" placeholder="พิมพ์ข้อความ"><button type="submit" id="chatSend">ส่ง</button></form>
+          <div class="voicebar"><button type="button" class="micbtn off" id="micBtn">ไมค์</button><button type="button" class="btn-sm" id="deafBtn">ปิดเสียงเพื่อน</button><span class="lockline" id="voiceHint"></span></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div id="gRole"></div>
+        <div id="gPrompt"></div>
+        <div id="gHost"></div>
+        <div class="panel">
+          <div class="label">บันทึกของผู้ดำเนินเกม</div>
+          <div class="log" id="gLog"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</div>
+<div class="modal" id="setModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="sheet-head"><h2 id="setTitle">ตั้งค่า</h2><button class="btn-sm" id="setClose">ปิด</button></div>
+    <section>
+      <h3>เสียงพูด</h3>
+      <div class="set-row"><span>โหมด</span><div class="seg" id="modeSeg"><button type="button" data-m="open">เปิดไมค์ตลอด</button><button type="button" data-m="ptt">กดค้างเพื่อพูด</button></div></div>
+      <div class="set-row"><span id="keyLabel">ปุ่มเปิด-ปิดไมค์</span><div class="row"><span class="kbd" id="keyShow">M</span><button type="button" class="btn-sm keybtn" id="keyBind">เปลี่ยนปุ่ม</button></div></div>
+      <label class="label" for="micSel">ไมโครโฟน</label>
+      <select id="micSel"><option value="">ค่าเริ่มต้นของเครื่อง</option></select>
+      <div class="meter" aria-label="ระดับเสียงไมค์"><i id="testLvl"></i></div>
+      <div class="row"><button type="button" class="btn-sm" id="loopBtn">ฟังเสียงตัวเอง</button><span class="hint">ใส่หูฟังก่อน ไม่งั้นเสียงจะหอน</span></div>
+      <label class="label" for="outSel">ลำโพง / หูฟัง</label>
+      <select id="outSel"><option value="">ค่าเริ่มต้นของเครื่อง</option></select>
+      <div><button type="button" class="btn-sm" id="outTest">ทดสอบเสียงออก</button></div>
+      <div class="hint" id="devHint"></div>
+    </section>
+    <section>
+      <h3>เสียงเอฟเฟคในเกม</h3>
+      <label class="chk"><input type="checkbox" id="sfxOn"> เปิดเสียงเอฟเฟค (ไฟเผา, กรงเล็บ, ปืน, หมาป่าหอน, แจ้งเตือนแชท)</label>
+      <div class="vol-row"><input type="range" id="volIn" min="0" max="100" step="5" aria-label="ระดับเสียงเอฟเฟค"><output id="volOut">70</output></div>
+      <div><button type="button" class="btn-sm" id="sfxTest">ลองฟังเสียง</button></div>
+    </section>
+    <section>
+      <h3>ผู้เล่น</h3>
+      <div class="hint">ปรับความดังเสียงพูดของเพื่อนแต่ละคน และซ่อนแชทของคนที่ไม่อยากเห็น มีผลเฉพาะบนเครื่องคุณ</div>
+      <div id="setPlayers"></div>
+    </section>
+    <section>
+      <details><summary class="label" style="cursor:pointer">ขั้นสูง: เซิร์ฟเวอร์ TURN</summary>
+        <div class="hint" style="margin:8px 0">ถ้าเพื่อนบางคนไม่ได้ยินเสียงเพราะเน็ตบางเครือข่ายบล็อกการเชื่อมต่อตรง ใส่ TURN server ที่นี่ (ทุกคนในห้องควรใส่เหมือนกัน)</div>
+        <div class="settings"><input type="text" id="turnUrl" placeholder="turn:example.com:3478"><input type="text" id="turnUser" placeholder="ชื่อผู้ใช้"><input type="text" id="turnPass" placeholder="รหัสผ่าน"></div>
+      </details>
+    </section>
+  </div>
+</div>
+<div class="fx" id="fx" hidden></div>
+<button class="fx-skip btn-sm" id="fxSkip" hidden>ข้าม</button>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(() => {
+/* ================= roles ================= */
+const TEAM = { v:{th:'ฝ่ายชาวบ้าน',cls:'vil',t:'t-village'}, w:{th:'ฝ่ายหมาป่า',cls:'wolf',t:'t-wolf'}, s:{th:'ฝ่ายตัวเอง',cls:'solo',t:'t-solo'} };
+const TICON = {
+  w:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 3l4 5h8l4-5v9l-2.5 4.5L12 21l-5.5-4.5L4 12z"/><path d="M9 12.5h.01M15 12.5h.01" stroke-width="2.6" stroke-linecap="round"/><path d="M10.5 16.5L12 18l1.5-1.5"/></svg>',
+  v:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>',
+  s:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 16.7 6.2 20l1.4-6.4-4.9-4.4 6.5-.7z"/></svg>'
+};
+const R_ = (th, team, desc, x={}) => Object.assign({ th, team, desc, max:1 }, x);
+const ROLES = {
+  villager: R_('ชาวบ้านธรรมดา','v','ไม่มีพลังพิเศษ ช่วยกันสังเกตและโหวตประหารตัวร้าย',{max:20}),
+  seer:     R_('ผู้หยั่งรู้','v','ทุกคืนส่องผู้เล่น 1 คน ว่าเป็นหมาป่าหรือไม่ (ลูกครึ่งหมาจะดูเหมือนหมาป่า สมุนหมาป่าดูเหมือนคนธรรมดา)'),
+  appr:     R_('ผู้หยั่งรู้ฝึกหัด','v','เมื่อผู้หยั่งรู้ตาย คุณจะได้ส่องแทนทุกคืน'),
+  aura:     R_('ผู้หยั่งรู้ออร่า','v','ทุกคืนส่อง 1 คน ว่ามีบทบาทพิเศษหรือไม่ (ชาวบ้านธรรมดาและมนุษย์หมาป่าธรรมดาถือว่าไม่พิเศษ)'),
+  pi:       R_('ผู้ตรวจสอบเหตุการณ์ผิดปกติ','v','ใช้ได้ครั้งเดียว: เลือก 1 คน รู้ว่าคนนั้นหรือคนที่นั่งติดกันซ้ายขวามีหมาป่าหรือไม่'),
+  beholder: R_('ผู้เฝ้ามอง','v','รู้ตั้งแต่ต้นเกมว่าใครคือผู้หยั่งรู้'),
+  mason:    R_('กลุ่มภราดรภาพ','v','สมาชิกรู้จักกันตั้งแต่ต้นเกม ต้องมีอย่างน้อย 2 คน',{max:3}),
+  bodyguard:R_('บอดี้การ์ด','v','ทุกคืนคุ้มกัน 1 คนจากการถูกฆ่า ห้ามคุ้มกันตัวเอง และห้ามคนเดิมสองคืนติด'),
+  priest:   R_('บาทหลวง','v','ใช้ได้ครั้งเดียว: ให้พรผู้เล่น 1 คน รอดจากการตายได้ 1 ครั้งไม่ว่าจากอะไร แม้บาทหลวงจะตายไปแล้ว'),
+  witch:    R_('แม่มด','v','ใช้ได้ครั้งเดียว: เห็นเหยื่อของหมาป่าในคืนนั้น แล้วเลือกช่วยชีวิตเหยื่อ หรือฆ่าใครก็ได้ 1 คน'),
+  hunter:   R_('นายพราน','v','เมื่อตายไม่ว่าทางไหน ยิงพาผู้เล่นอีก 1 คนไปด้วย'),
+  huntress: R_('พรานหญิง','v','ใช้ได้ครั้งเดียว: เลือกฆ่าผู้เล่น 1 คนตอนกลางคืน'),
+  revealer: R_('ผู้เปิดเผยตัวตน','v','กลางคืนชี้ 1 คนได้ ถ้าเป็นหมาป่า (รวมลูกครึ่งหมา) คนนั้นตาย ถ้าไม่ใช่ คุณตายเอง'),
+  cupid:    R_('คิวปิด','v','คืนแรกเลือก 2 คนเป็นคู่รัก (เลือกตัวเองได้) คู่รักเห็นบทบาทกัน ถ้าคนหนึ่งตายอีกคนตายตาม ถ้ารอดเป็น 2 คนสุดท้ายจะชนะด้วยกัน'),
+  diseased: R_('ผู้ติดโรค','v','ถ้าหมาป่าฆ่าคุณ คืนถัดไปหมาป่าจะฆ่าใครไม่ได้'),
+  lycan:    R_('ลูกครึ่งหมา','v','เป็นชาวบ้าน แต่ผู้หยั่งรู้จะเห็นคุณเป็นหมาป่า'),
+  oldwoman: R_('หญิงแก่','v','ทุกคืนไล่ 1 คนออกนอกหมู่บ้าน คนนั้นจะไม่ถูกฆ่าในคืนนั้น แต่ห้ามพูดและห้ามโหวตในวันถัดไป (ห้ามคนเดิมสองคืนติด)'),
+  spell:    R_('ผู้ร่ายเวท','v','ทุกคืนร่ายเวทใส่ 1 คน คนนั้นห้ามพูดและห้ามโหวตในวันถัดไป (ห้ามคนเดิมสองคืนติด)'),
+  prince:   R_('เจ้าชาย','v','ถ้าถูกโหวตประหาร จะเปิดเผยตัวและรอดได้ 1 ครั้ง แต่ถ้าถูกฆ่าตอนกลางคืนจะตายตามปกติ'),
+  tough:    R_('หนุ่มบึ้ก','v','ถ้าถูกหมาป่ากัด จะยังไม่ตายทันที แต่จะตายในคืนถัดไป'),
+  pacifist: R_('ผู้รักสงบ','v','โหวตประหารใครไม่ได้ ทำได้แค่งดออกเสียง'),
+  idiot:    R_('ชาวบ้านผู้โง่เง่า','v','ทุกรอบโหวตต้องโหวตประหารใครสักคน งดออกเสียงไม่ได้'),
+  tm:       R_('ผู้สร้างปัญหา','v','ใช้ได้ครั้งเดียว: ก่อเรื่องให้วันถัดไปมีการโหวตประหาร 2 รอบ'),
+  cursed:   R_('ผู้โดนสาป','v','เป็นชาวบ้านจนกว่าหมาป่าจะกัด แล้วจะกลายเป็นมนุษย์หมาป่าแทนการตาย'),
+  doppel:   R_('ด็อพเพิลเก็งเงอร์','v','คืนแรกเลือก 1 คน ถ้าคนนั้นตาย คุณจะได้บทบาทและฝ่ายของเขาแทน'),
+  wolf:     R_('มนุษย์หมาป่า','w','ทุกคืนเลือกเหยื่อร่วมกับฝูง ชนะเมื่อหมาป่ามีจำนวนเท่ากับหรือมากกว่าคนที่เหลือ',{max:6,pack:1}),
+  cub:      R_('ลูกหมาป่า','w','ล่าร่วมกับฝูง ถ้าคุณตาย คืนถัดไปฝูงจะฆ่าได้ 2 คน',{pack:1}),
+  minion:   R_('สมุนหมาป่า','w','รู้ว่าใครเป็นหมาป่า แต่หมาป่าไม่รู้จักคุณ ผู้หยั่งรู้เห็นคุณเป็นคนธรรมดา'),
+  sorc:     R_('แม่มดดำ','w','ฝ่ายหมาป่า ทุกคืนตามหาผู้หยั่งรู้ ส่องได้ว่า 1 คนเป็นผู้หยั่งรู้หรือไม่'),
+  lone:     R_('หมาป่าเดียวดาย','s','ล่ากับฝูงหมาป่า แต่ชนะคนเดียว เมื่อเป็นหมาป่าตัวเดียวที่เหลือตอนหมาป่าครองหมู่บ้าน',{pack:1}),
+  tanner:   R_('คนบ้าคนผีทะเล','s','ชนะคนเดียวถ้าถูกโหวตประหาร'),
+  hoodlum:  R_('อันธพาล','s','คืนแรกเลือกเป้าหมายเท่ากับจำนวนหมาป่า ถ้าเป้าหมายตายหมดและคุณยังรอดตอนจบเกม คุณชนะด้วย'),
+  sk:       R_('ฆาตกรต่อเนื่อง','s','ทุกคืนฆ่า 1 คน หมาป่าฆ่าคุณไม่ได้ ชนะเมื่อเหลือรอดไม่เกิน 2 คนและคุณยังอยู่'),
+  chupa:    R_('ชูปากาบรัส','s','ทุกคืนเลือก 1 คน ถ้าเป็นหมาป่าจะตาย เมื่อหมาป่าหมดแล้วฆ่าใครก็ได้ ชนะเมื่อเหลือรอดไม่เกิน 2 คนและคุณยังอยู่'),
+  cult:     R_('ผู้นำลัทธิ','s','ทุกคืนชวน 1 คนเข้าลัทธิ ชนะเมื่อทุกคนที่รอดอยู่ในลัทธิ ถ้าคุณตาย ลัทธิล่มสลาย'),
+};
+const ORDER = Object.keys(ROLES);
+const isPack = r => !!(ROLES[r] && ROLES[r].pack);
+const looksWolf = r => isPack(r) || r === 'lycan';
+const isSpecial = r => r !== 'villager' && r !== 'wolf';
+const ONCE = ['pi','priest','witch','huntress','tm'];
+const PH_TH = {lobby:'ห้องรอ',night:'กลางคืน',day:'กลางวัน',vote:'โหวต',hunter:'นายพราน',end:'จบเกม'};
+const BOT_NAMES = ['ป้าแดง','ลุงมี','น้องหมู','ยายจันทร์','พี่หนวด','ครูสมร','ตาเหลือง','เจ๊หงส์','ไอ้ตี๋','แม่ค้าส้ม','ลุงเสือ','หนูนา','พี่ปุ๋ย','น้าเปี๊ยก','ป้าบาง'];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const clip = s => String(s || '').replace(/[\u0000-\u001f]/g,'').trim().slice(0,16);
+function store(kind, k, v){ try { const s = kind==='s'?sessionStorage:localStorage; if (v === undefined) return s.getItem(k); if (v === null) s.removeItem(k); else s.setItem(k, v); } catch(e){ return null; } }
+function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const pickRand = a => a[Math.floor(Math.random()*a.length)];
+function hue(s){ let h=0; for (const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return h%360; }
+
+const me = { pid: store('s','ww.pid') || ('p' + Math.random().toString(36).slice(2,8)), name: store('l','ww.name') || '' };
+store('s','ww.pid', me.pid);
+
+const PREFIX = 'kuenmapa-v1-';
+const hostIdOf = c => PREFIX + c.toLowerCase() + '-h';
+const peerIdOf = (c, pid) => PREFIX + c.toLowerCase() + '-' + pid;
+let peer = null, hostConn = null, code = null, solo = false, hosting = false, connected = false;
+let myState = null, view = null, clockOff = 0, myPres = {};
+let joinOrder = [], botMemo = {}, hostActs = {};
+const conns = new Map();           /* host only: pid -> { conn, n, a, y, on } */
+const lastSent = new Map();
+let joinedAt = 0, revealRole = false, lastSig = '', retryTimer = null, leaveArm = 0;
+
+/* ================= home ================= */
+$('#rolesList').innerHTML = ['v','w','s'].map((t,i) => `<details class="team" ${i===0?'open':''}><summary><span class="${TEAM[t].t}">${TEAM[t].th}</span></summary><div class="roles-list">` +
+  ORDER.filter(k => ROLES[k].team === t).map(k => `<div class="role-line"><div class="ico ${TEAM[t].t}">${TICON[t]}</div><div><b>${ROLES[k].th}</b><br><span class="muted">${ROLES[k].desc}</span></div></div>`).join('') + '</div></details>').join('');
+
+const nameIn = $('#nameIn'), codeIn = $('#codeIn');
+nameIn.value = me.name;
+nameIn.addEventListener('input', () => { me.name = clip(nameIn.value); store('l','ww.name', me.name); });
+codeIn.addEventListener('input', () => { codeIn.value = codeIn.value.toUpperCase().replace(/[^A-Z]/g,''); });
+function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,2600); }
+function needName(){ if (!clip(nameIn.value)) { toast('ใส่ชื่อก่อนนะ'); nameIn.focus(); return true; } me.name = clip(nameIn.value); return false; }
+function setConnNote(t){ const n=$('#connNote'); n.hidden=!t; n.textContent=t||''; }
+const genCode = () => { const L='ABCDEFGHJKMNPQRSTUVWXYZ'; let c=''; for(let i=0;i<4;i++) c+=L[Math.floor(Math.random()*L.length)]; return c; };
+const inviteLink = c => location.origin + location.pathname + '#' + c;
+
+function initApp(){
+  if (typeof Peer === 'undefined') { setConnNote('โหลดระบบออนไลน์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า ตอนนี้ยังฝึกเล่นกับบอทได้'); ['#createBtn','#joinBtn'].forEach(s=>$(s).disabled=true); }
+  const h = location.hash.replace('#','').toUpperCase();
+  if (/^[A-Z]{4}$/.test(h)) codeIn.value = h;
+  const box = $('#rejoinBox'), saved = store('s','ww.code');
+  let saveHost = null; try { saveHost = JSON.parse(store('l','ww.host') || 'null'); } catch(e){}
+  if (saveHost && saveHost.st && Date.now() - saveHost.at < 3*3600e3 && saveHost.pid === me.pid) {
+    box.hidden = false; box.innerHTML = `คุณเป็นโฮสต์ห้อง <b>${esc(saveHost.code)}</b> ค้างไว้ <button class="btn-sm" id="resumeBtn">กลับไปคุมห้อง</button>`;
+    $('#resumeBtn').onclick = () => { if (!needName()) hostRoom(saveHost.code, saveHost); };
+  } else if (saved) {
+    box.hidden = false; box.innerHTML = `คุณยังอยู่ในห้อง <b>${esc(saved)}</b> <button class="btn-sm" id="rejoinBtn">กลับเข้าห้อง</button>`;
+    $('#rejoinBtn').onclick = () => { if (!needName()) joinRoom(saved); };
+  }
+}
+
+/* ================= peer setup ================= */
+function iceConfig(){
+  const ice = [{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }];
+  if (cfg.turn && cfg.turn.url) ice.push({ urls: cfg.turn.url, username: cfg.turn.user || undefined, credential: cfg.turn.pass || undefined });
+  return { iceServers: ice };
+}
+function makePeer(id, onOpen, onFail){
+  const p = new Peer(id, { debug: 0, config: iceConfig() });
+  p.on('open', () => onOpen(p));
+  p.on('error', e => onFail(e, p));
+  p.on('disconnected', () => { if (!p.destroyed) setTimeout(() => { try { if (!p.destroyed && p.disconnected) p.reconnect(); } catch(_){} }, 1500); });
+  p.on('call', c => voiceIncoming(c));
+  return p;
+}
+function resetSession(){
+  clearTimeout(retryTimer);
+  voiceStopAll();
+  if (hostConn) { try { hostConn.close(); } catch(_){} hostConn = null; }
+  for (const c of conns.values()) { try { c.conn.close(); } catch(_){} }
+  conns.clear(); lastSent.clear();
+  if (peer) { try { peer.destroy(); } catch(_){} peer = null; }
+  connected = false; view = null; myState = null; hosting = false; solo = false; myPres = {}; hostActs = {};
+}
+
+/* ----- host ----- */
+function hostRoom(c, saved, tries=0){
+  resetSession();
+  code = c; hosting = true; solo = false; joinedAt = Date.now();
+  myState = saved && saved.st ? saved.st : newState(c);
+  myState.h = me.pid; joinOrder = saved && saved.jo ? saved.jo : []; botMemo = {}; revealRole = false;
+  myPres = {};
+  store('s','ww.code', null);
+  showGame(); setStatus('กำลังเปิดห้อง…');
+  peer = makePeer(hostIdOf(c), () => { connected = true; setStatus(''); saveHost(); voiceStart(); refresh(); },
+    (e) => {
+      if (e.type === 'unavailable-id') {
+        if (saved && tries < 12) { setStatus('กำลังกู้ห้องเดิม… (' + (tries+1) + ')'); setTimeout(() => hostRoom(c, saved, tries+1), 3000); }
+        else if (!saved) hostRoom(genCode(), null);
+        else { toast('กู้ห้องเดิมไม่ได้ ลองสร้างห้องใหม่'); leaveGame(); }
+      } else if (['network','server-error','socket-error','socket-closed'].includes(e.type)) setStatus('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังลองใหม่…');
+    });
+  peer.on('connection', conn => {
+    conn.on('data', d => onHostData(conn, d));
+    conn.on('close', () => { const pid = conn._pid, c2 = pid && conns.get(pid); if (c2 && c2.conn === conn) { c2.on = false; refresh(); } });
+    conn.on('error', () => {});
+  });
+}
+let saveT = 0;
+function saveHost(){ if (solo || !hosting || !myState) return; const now = Date.now(); if (now - saveT < 1500) return; saveT = now; store('l','ww.host', JSON.stringify({ code, pid: me.pid, at: now, st: myState, jo: joinOrder })); }
+function onHostData(conn, d){
+  if (!d || typeof d !== 'object') return;
+  if (d.t === 'hello') {
+    const pid = String(d.pid || '');
+    if (!/^p[a-z0-9]{4,10}$/.test(pid) || conn.peer !== peerIdOf(code, pid)) { try { conn.close(); } catch(_){} return; }
+    const old = conns.get(pid); if (old && old.conn !== conn) { try { old.conn.close(); } catch(_){} }
+    conn._pid = pid;
+    conns.set(pid, { conn, n: clip(d.n) || 'ผู้เล่น', a: old ? old.a : null, y: null, on: true });
+    lastSent.delete(pid);
+    sendChatHistory(pid);
+    refresh();
+    return;
+  }
+  const pid = conn._pid, c = pid && conns.get(pid); if (!c || c.conn !== conn) return;
+  if (d.t === 'pres') { if ('a' in d) c.a = d.a; if ('y' in d) c.y = d.y; if (typeof d.n === 'string' && clip(d.n)) c.n = clip(d.n); refresh(); }
+  else if (d.t === 'chat') relayChat(pid, d.ch, d.txt);
+}
+function peersInfo(){
+  const info = {};
+  for (const [pid, c] of conns) if (c.on) info[pid] = { pid, n: c.n, a: c.a, y: c.y };
+  info[me.pid] = { pid: me.pid, n: me.name, a: myPres.a, y: myPres.y };
+  return info;
+}
+function onlineList(){ return [me.pid, ...[...conns].filter(([,c]) => c.on).map(([p]) => p)]; }
+function broadcast(){
+  if (solo || !hosting || !myState) return;
+  const now = Date.now();
+  for (const [pid, c] of conns) {
+    if (!c.on || !c.conn.open) continue;
+    const v = viewFor(pid), s = JSON.stringify(v), prev = lastSent.get(pid);
+    if (!prev || prev.s !== s || now - prev.at > 4000) { try { c.conn.send({ t:'view', v, now }); lastSent.set(pid, { s, at: now }); } catch(_){} }
+  }
+  saveHost();
+}
+
+/* ----- per-player view: only what that player is allowed to know ----- */
+function canHearVoice(st, listener, speaker){
+  if (listener === speaker) return false;
+  if (st.ph === 'lobby' || st.ph === 'end') return true;
+  const inS = st.P.some(p => p.i === speaker), inL = st.P.some(p => p.i === listener);
+  const sA = inS && !!st.A[speaker], lA = inL && !!st.A[listener];
+  if (!sA) return !lA;
+  if (st.ph === 'night') return isPack(st.R[speaker]) ? (!lA || isPack(st.R[listener])) : false;
+  if (silenced(st, speaker)) return false;
+  return true;
+}
+function viewFor(pid){
+  const st = myState;
+  const S = { code: st.code, h: st.h, hn: st.hn, ph: st.ph, r: st.r, P: st.P, A: st.A, B: st.B, end: st.end, log: st.log, set: st.set, g: st.g,
+    vn: st.vn, ns: st.ns, hs: st.hs, nw: st.nw, vr: st.vr, hv: st.hv, win: st.win, wp: st.wp, fx: st.fx, ex: st.ex, sil: st.sil, pr: st.pr, tm: st.tm, iw: st.iw };
+  const lobby = st.ph === 'lobby', meIn = st.P.some(p => p.i === pid), role = meIn && !lobby ? st.R[pid] : null;
+  const ghost = !lobby && (st.ph === 'end' || !meIn || !st.A[pid]);
+  const R = {};
+  if (!lobby) {
+    for (const p of st.P) {
+      const x = p.i, rx = st.R[x];
+      if (ghost || x === pid || !st.A[x] || st.pr === x ||
+        ((isPack(role) || role === 'minion') && isPack(rx)) ||
+        (role === 'mason' && rx === 'mason') ||
+        (st.L && st.L.includes(pid) && st.L.includes(x))) R[x] = rx;
+    }
+  }
+  S.R = R;
+  S.L = st.L && (ghost || st.L.includes(pid) || role === 'cupid') ? st.L : null;
+  S.cult = (ghost || role === 'cult' || (st.cult||[]).includes(pid)) ? (st.cult || []) : [];
+  S.hood = st.hood && (ghost || st.hood.p === pid) ? st.hood : null;
+  S.dop = st.dop && (ghost || st.dop.p === pid) ? st.dop : null;
+  S.sr = (st.sr || []).filter(e => ghost || e[4] === pid);
+  S.wv = role === 'witch' ? (st.wv || []) : [];
+  S.nok = isPack(role) ? st.nok : null; S.dbl = isPack(role) ? st.dbl : null;
+  S.cu = st.cu && st.cu.p === pid ? st.cu : null;
+  S.used = { [pid]: st.used ? st.used[pid] : 0 };
+  S.lp = { [pid]: st.lp ? st.lp[pid] : null };
+  if (role === 'appr') S.sa = st.P.some(p => st.A[p.i] && st.R[p.i] === 'seer') ? 1 : 0;
+  if (role === 'beholder') S.bh = st.P.filter(p => st.R[p.i] === 'seer').map(p => p.i);
+  const acts = {};
+  if (st.ph === 'vote' || st.ph === 'hunter') Object.assign(acts, hostActs);
+  else if (st.ph === 'night' && st.ns === 1 && (isPack(role) || ghost)) for (const x in hostActs) if (isPack(st.R[x])) acts[x] = hostActs[x];
+  S.acts = acts;
+  const info = peersInfo(), k = key(st);
+  S.rdy = st.ph === 'day' ? Object.keys(info).filter(x => info[x].y === k) : [];
+  S.on = onlineList();
+  S.peers = {}; for (const x of S.on) S.peers[x] = x === st.h ? hostIdOf(code) : peerIdOf(code, x);
+  const myAct = info[pid] && info[pid].a;
+  if (myAct && myAct.k === k && typeof myAct.t === 'string' && myAct.t !== 'n' && st.R[myAct.t] !== undefined && st.ph === 'night') {
+    const t = myAct.t;
+    const kind = (role === 'seer' || role === 'appr') ? 's' : role === 'aura' ? 'a' : role === 'sorc' ? 'o' : role === 'pi' ? 'i' : null;
+    if (kind) S.lr = [kind, t, (kind==='s' ? looksWolf(st.R[t]) : kind==='a' ? isSpecial(st.R[t]) : kind==='o' ? st.R[t]==='seer' : [t,...neighbors(st,t)].some(x => looksWolf(st.R[x]))) ? 1 : 0, k];
+  }
+  const humans = S.on;
+  S.vs = humans.filter(x => canHearVoice(st, x, pid));
+  S.vh = humans.filter(x => canHearVoice(st, pid, x));
+  return S;
+}
+
+/* ----- client ----- */
+function joinRoom(c, tries=0){
+  resetSession();
+  code = c; hosting = false; solo = false; joinedAt = Date.now(); revealRole = false; myPres = {};
+  store('s','ww.code', c);
+  showGame(); setStatus('กำลังเชื่อมต่อห้อง ' + c + '…');
+  peer = makePeer(peerIdOf(c, me.pid), () => { connectHost(); voiceStart(); },
+    (e) => {
+      if (e.type === 'peer-unavailable') { if (!view) { setStatus(''); notFound(); } else scheduleReconnect(); }
+      else if (e.type === 'unavailable-id' && tries < 10) setTimeout(() => joinRoom(c, tries+1), 2500);
+      else if (['network','server-error','socket-error','socket-closed'].includes(e.type)) setStatus('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังลองใหม่…');
+    });
+}
+function connectHost(){
+  if (!peer || peer.destroyed) return;
+  const conn = peer.connect(hostIdOf(code), { reliable: true });
+  hostConn = conn;
+  conn.on('open', () => { connected = true; setStatus(''); conn.send({ t:'hello', pid: me.pid, n: me.name }); if (myPres.a || myPres.y) conn.send({ t:'pres', a: myPres.a || null, y: myPres.y || null }); refresh(); });
+  conn.on('data', d => {
+    if (!d || typeof d !== 'object') return;
+    if (d.t === 'view' && d.v) { view = d.v; clockOff = (d.now || Date.now()) - Date.now(); refresh(); }
+    else if (d.t === 'chat' && d.m) { addMsg(d.m); renderChat(); }
+    else if (d.t === 'chatlog' && Array.isArray(d.m)) { d.m.forEach(addMsg); renderChat(); }
+  });
+  conn.on('close', () => { if (hostConn === conn) { connected = false; refresh(); scheduleReconnect(); } });
+  conn.on('error', () => {});
+}
+function scheduleReconnect(){
+  if (hosting || solo || !peer) return;
+  setStatus('ขาดการเชื่อมต่อกับโฮสต์ กำลังเชื่อมใหม่…');
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => { if (!connected && peer && !peer.destroyed) connectHost(); }, 3000);
+}
+function notFound(){
+  $('#gBanner').innerHTML = `<h2>ไม่พบห้อง ${esc(code)}</h2><p>ตรวจรหัสอีกครั้ง หรือให้เพื่อนสร้างห้องก่อน แล้วลองเข้าใหม่</p>`;
+  setTimeout(() => { if (!view && !hosting) { toast('ไม่พบห้อง ' + code); leaveGame(); } }, 3500);
+}
+function setStatus(t){ $('#gConn').textContent = t || ''; }
+
+/* ================= entering / leaving ================= */
+function newState(c){
+  return { e:1, s:1, code:c, h:me.pid, hn:me.name, ph:'lobby', r:0, P:[], R:{}, A:{}, B:0, end:0, log:[], ba:{},
+    set:{ c:{ wolf:1, seer:1, bodyguard:1 }, dt:120, nt:45, vt:45 } };
+}
+function startSolo(){
+  resetSession();
+  solo = true; hosting = true; code = 'ฝึก'; connected = true; joinedAt = Date.now();
+  myState = newState('ฝึก'); myState.B = 7; myState.set.dt = 60;
+  myState.set.c = { wolf:2, seer:1, bodyguard:1, witch:1, hunter:1 };
+  myPres = {}; joinOrder = []; botMemo = {}; revealRole = false;
+  showGame();
+}
+function leaveGame(){
+  if (hosting && !solo) store('l','ww.host', null);
+  resetSession();
+  resetFx(); curS = null; resetChat();
+  code = null; store('s','ww.code', null); $('#rejoinBox').hidden = true; document.body.dataset.ph = '';
+  $('#game').hidden = true; $('#home').hidden = false;
+  if (location.hash) history.replaceState(null, '', location.pathname);
+}
+function showGame(){ resetFx(); resetChat(); $('#home').hidden = true; $('#game').hidden = false; lastSig = ''; leaveArm = 0; refresh(); window.scrollTo(0,0); }
+$('#createBtn').onclick = () => { if (needName()) return; hostRoom(genCode(), null); };
+$('#joinBtn').onclick = () => { if (needName()) return; const c = codeIn.value.trim(); if (c.length!==4) { toast('รหัสห้องมี 4 ตัวอักษร'); return; } joinRoom(c); };
+$('#soloBtn').onclick = () => { if (needName()) return; startSolo(); };
+$('#leaveBtn').onclick = () => {
+  if (hosting && !solo && Date.now() - leaveArm > 4000) { leaveArm = Date.now(); $('#leaveBtn').textContent = 'กดอีกครั้งเพื่อปิดห้อง'; setTimeout(() => { $('#leaveBtn').textContent = 'ออกจากห้อง'; }, 4000); return; }
+  leaveGame();
+};
+$('#copyBtn').onclick = () => { const t = inviteLink(code || ''); try { navigator.clipboard.writeText(t).then(()=>toast('คัดลอกลิงก์ชวนเพื่อนแล้ว'), ()=>toast(t)); } catch(e){ toast(t); } };
+
+function setPres(patch){
+  Object.assign(myPres, patch); for (const k in patch) if (patch[k] === null) delete myPres[k];
+  if (!hosting && hostConn && hostConn.open) { try { hostConn.send(Object.assign({ t:'pres' }, patch)); } catch(_){} }
+  refresh();
+}
+
+/* ================= engine ================= */
+const isBot = id => String(id).startsWith('bot');
+const key = st => (st.g || '') + ':' + st.r + st.ph + (st.ns||'') + (st.vn||'');
+const alive = st => st.P.filter(p => st.A[p.i]).map(p => p.i);
+const nameOf = (st, id) => { const p = st && st.P.find(x => x.i === id); return p ? p.n : '?'; };
+const roleTh = r => ROLES[r] ? ROLES[r].th : '';
+const once = (st, p) => !(st.used && st.used[p]);
+function neighbors(st, t){ const al = alive(st); const i = al.indexOf(t); if (i < 0 || al.length < 2) return []; return [...new Set([al[(i-1+al.length)%al.length], al[(i+1)%al.length]])].filter(x => x !== t); }
+
+function needs(st){
+  const al = alive(st), out = {}, R = st.R, r = st.r;
+  const seerAlive = st.sa !== undefined ? !!st.sa : al.some(p => R[p] === 'seer');
+  const add = (p, o, n=1, lock=0) => { n = Math.min(n, o.filter(x => x.length > 2).length || n); if (o.length) out[p] = { o, n, lock }; };
+  if (st.ph === 'night' && st.ns === 1) {
+    for (const p of al) { const ro = R[p], oth = al.filter(x => x !== p), lp = (st.lp||{})[p];
+      if (isPack(ro)) { if (st.nok !== r) add(p, al.filter(x => !isPack(R[x])), st.dbl === r ? 2 : 1); }
+      else if (ro === 'seer' || (ro === 'appr' && !seerAlive) || ro === 'aura' || ro === 'sorc') add(p, oth, 1, 1);
+      else if (ro === 'pi' && once(st,p)) add(p, [...oth,'n'], 1, 1);
+      else if (ro === 'bodyguard') add(p, oth.filter(x => x !== lp));
+      else if ((ro === 'priest' || ro === 'huntress') && once(st,p)) add(p, [...oth,'n']);
+      else if (ro === 'revealer') add(p, [...oth,'n']);
+      else if (ro === 'cupid' && r === 1) add(p, al, 2);
+      else if (ro === 'oldwoman' || ro === 'spell') add(p, oth.filter(x => x !== lp));
+      else if (ro === 'tm' && once(st,p)) add(p, ['y','n']);
+      else if (ro === 'sk' || ro === 'chupa') add(p, oth);
+      else if (ro === 'cult') add(p, oth.filter(x => !(st.cult||[]).includes(x)));
+      else if (ro === 'hoodlum' && r === 1) add(p, oth, st.iw || 1);
+      else if (ro === 'doppel' && r === 1) add(p, oth);
+    }
+  } else if (st.ph === 'night' && st.ns === 2) {
+    const w = al.find(p => R[p] === 'witch');
+    if (w && once(st, w)) add(w, [...(st.wv||[]).filter(v => st.A[v]).map(v => 'H'+v), ...al.filter(x => x !== w), 'n']);
+  } else if (st.ph === 'vote') {
+    for (const p of al) {
+      if ((st.ex && st.ex.r === r && st.ex.p === p) || (st.sil && st.sil.r === r && st.sil.p === p)) continue;
+      const tg = al.filter(x => x !== p && !(st.ex && st.ex.r === r && st.ex.p === x));
+      if (R[p] === 'pacifist') add(p, ['x']); else if (R[p] === 'idiot') add(p, tg); else add(p, [...tg,'x']);
+    }
+  } else if (st.ph === 'hunter' && st.hs) add(st.hs, al.filter(x => x !== st.hs));
+  return out;
+}
+function valid(t, need){
+  if (!need) return false;
+  if (need.n === 1) return typeof t === 'string' && need.o.includes(t);
+  return Array.isArray(t) && t.length === need.n && new Set(t).size === t.length && t.every(x => need.o.includes(x));
+}
+function topN(arr, n){
+  const t = {}; arr.forEach(x => t[x] = (t[x]||0) + 1);
+  return shuffle(Object.keys(t)).sort((a,b) => t[b] - t[a]).slice(0, n);
+}
+function killMany(st, list){
+  const out = [], q = [...list];
+  while (q.length) { const p = q.shift(); if (!st.A[p]) continue; st.A[p] = 0; out.push(p);
+    const ro = st.R[p];
+    if (ro === 'cub') st.dbl = st.r + 1;
+    if (ro === 'cult') st.cult = [];
+    if (st.L && st.L.includes(p)) { const o = st.L.find(x => x !== p); if (o && st.A[o]) q.push(o); }
+    if (st.dop && !st.dop.done && st.dop.m === p && st.A[st.dop.p]) { st.R[st.dop.p] = ro; st.dop.done = 1; }
+  }
+  return out;
+}
+function outcome(st){
+  const al = alive(st), R = st.R, all = st.P.map(p => p.i), team = p => ROLES[R[p]].team;
+  let res = null;
+  if (st.L && al.length === 2 && st.L.every(x => al.includes(x))) res = { w:'l', p:[...st.L] };
+  const cl = al.find(p => R[p] === 'cult');
+  if (!res && cl && al.length >= 2 && al.every(p => p === cl || (st.cult||[]).includes(p))) res = { w:'c', p:al };
+  const killers = al.filter(p => R[p] === 'sk' || R[p] === 'chupa');
+  if (!res && killers.length && al.length <= 2) res = { w:'s', p:killers };
+  if (!res && !killers.length) {
+    const W = al.filter(p => isPack(R[p]));
+    if (!W.length) res = { w:'v', p: all.filter(p => team(p) === 'v') };
+    else if (W.length >= al.length - W.length) { const lone = W.find(p => R[p] === 'lone');
+      res = (lone && W.length === 1) ? { w:'lone', p:[lone] } : { w:'w', p: all.filter(p => team(p) === 'w') }; }
+  }
+  if (res && st.hood && st.A[st.hood.p] && st.hood.m.every(x => !st.A[x]) && !res.p.includes(st.hood.p)) res.p.push(st.hood.p);
+  return res;
+}
+function durOf(st, ph){ const s = st.set; return (ph==='night'? s.nt : ph==='day'? s.dt : ph==='vote'? s.vt : 25) * 1000; }
+function fxPad(st){ return 1500 + (st._fx && st._fx.length ? 7500 : 0); }
+function goPhase(st, ph, now){
+  if (ph === 'night') { st.r += 1; st.ns = 1; }
+  if (ph === 'vote2') { ph = 'vote'; st.vn = 2; } else if (ph === 'vote') st.vn = 1;
+  st.ph = ph; st.ba = {}; st.end = now + durOf(st, ph) + fxPad(st);
+}
+function addLog(st, e){ st.log.push(e); if (st.log.length > 12) st.log = st.log.slice(-12); }
+function finish(st, res){ if (st._fx) st._fx.push({ t:'end', w:res.w }); st.ph = 'end'; st.end = 0; st.win = res.w; st.wp = res.p; addLog(st, ['w', res.w]); }
+function afterDeath(st, died, next, now){
+  st.hq = [...(st.hq||[]), ...died.filter(p => st.R[p] === 'hunter')];
+  if (st.hq.length && alive(st).length) { st.hs = st.hq.shift(); st.nx = next; st.ph = 'hunter'; st.ba = {}; st.end = now + 25000 + fxPad(st); return; }
+  const res = outcome(st); if (res) { finish(st, res); return; }
+  goPhase(st, next, now);
+}
+function nightStage1(st, acts, now){
+  const al = alive(st), R = st.R, r = st.r;
+  st.used = st.used || {}; st.lp = st.lp || {}; st.sr = st.sr || []; st.bless = st.bless || []; st.cult = st.cult || [];
+  st.att = []; st.prot = [];
+  for (const p in acts) { const ro = R[p], t = acts[p];
+    if (ro === 'cupid') st.L = t;
+    else if (ro === 'seer' || ro === 'appr') st.sr.push([r,'s',t,looksWolf(R[t])?1:0,p]);
+    else if (ro === 'aura') st.sr.push([r,'a',t,isSpecial(R[t])?1:0,p]);
+    else if (ro === 'sorc') st.sr.push([r,'o',t,R[t]==='seer'?1:0,p]);
+    else if (ro === 'pi' && t !== 'n') { st.used[p] = 1; st.sr.push([r,'i',t,[t,...neighbors(st,t)].some(x => looksWolf(R[x]))?1:0,p]); }
+    else if (ro === 'bodyguard') { st.prot.push(t); st.lp[p] = t; }
+    else if (ro === 'oldwoman') { st.prot.push(t); st.ex = { r, p:t }; st.lp[p] = t; }
+    else if (ro === 'spell') { st.sil = { r, p:t }; st.lp[p] = t; }
+    else if (ro === 'priest' && t !== 'n') { st.used[p] = 1; st.bless.push(t); }
+    else if (ro === 'huntress' && t !== 'n') { st.used[p] = 1; st.att.push([t,'h']); }
+    else if (ro === 'revealer' && t !== 'n') st.att.push(looksWolf(R[t]) ? [t,'r'] : [p,'r']);
+    else if (ro === 'tm' && t === 'y') { st.used[p] = 1; st.tm = r; }
+    else if (ro === 'sk') st.att.push([t,'k']);
+    else if (ro === 'chupa') { if (isPack(R[t]) || !al.some(x => isPack(R[x]))) st.att.push([t,'c']); }
+    else if (ro === 'cult') st.cult.push(t);
+    else if (ro === 'hoodlum') st.hood = { p, m: [].concat(t) };
+    else if (ro === 'doppel') st.dop = { p, m: t };
+  }
+  if (!acts[al.find(p => R[p]==='oldwoman')]) st.ex = null;
+  if (!acts[al.find(p => R[p]==='spell')]) st.sil = null;
+  const picks = []; al.filter(p => isPack(R[p])).forEach(p => { if (acts[p]) picks.push(...[].concat(acts[p])); });
+  st.wv = st.nok === r ? [] : topN(picks, st.dbl === r ? 2 : 1);
+  st.wv.forEach(v => st.att.push([v,'w']));
+  if (st.tg && st.tg.r === r) { st.att.push([st.tg.p,'t']); st.tg = null; }
+  const w = al.find(p => R[p] === 'witch');
+  if (w && once(st, w)) { st.ns = 2; st.ba = {}; st.end = now + 20000; return; }
+  nightFinish(st, {}, now);
+}
+function nightFinish(st, acts, now){
+  const R = st.R, r = st.r, prot = new Set(st.prot || []);
+  const w = Object.keys(acts).find(p => R[p] === 'witch');
+  if (w && acts[w] !== 'n') { st.used[w] = 1; const t = acts[w]; if (t[0] === 'H') prot.add(t.slice(1)); else st.att.push([t,'x']); }
+  const deaths = new Set();
+  for (const [t, src] of st.att || []) {
+    if (!st.A[t] || deaths.has(t)) continue;
+    if (src !== 't' && prot.has(t)) continue;
+    if (src === 'w') {
+      if (R[t] === 'sk') continue;
+      if (R[t] === 'cursed') { R[t] = 'wolf'; st.cu = { r, p:t }; continue; }
+      if (R[t] === 'tough') { st.tg = { r: r+1, p:t }; continue; }
+    }
+    const bi = (st.bless||[]).indexOf(t);
+    if (bi >= 0 && src !== 't') { st.bless.splice(bi, 1); continue; }
+    deaths.add(t);
+    if (src === 'w' && R[t] === 'diseased') st.nok = r + 1;
+  }
+  const died = killMany(st, [...deaths]);
+  st.nw = { r, d: died }; addLog(st, ['n', r, died]); if (st._fx) st._fx.push({ t:'night', d: died });
+  st.ns = 1; st.att = []; st.prot = []; st.wv = [];
+  afterDeath(st, died, 'day', now);
+}
+function resolve(st, acts, now){
+  st._fx = []; resolveInner(st, acts, now);
+  if (st._fx.length) st.fx = { id: ((st.fx && st.fx.id) || 0) + 1, it: st._fx };
+  delete st._fx;
+}
+function resolveInner(st, acts, now){
+  if (st.ph === 'night') { if (st.ns === 2) nightFinish(st, acts, now); else nightStage1(st, acts, now); }
+  else if (st.ph === 'day') goPhase(st, 'vote', now);
+  else if (st.ph === 'vote') {
+    const t = {}; let skip = 0;
+    for (const p in acts) { if (acts[p] === 'x') skip++; else t[acts[p]] = (t[acts[p]]||0) + 1; }
+    let out = null, best = 0, tie = false;
+    for (const x in t) { if (t[x] > best) { best = t[x]; out = x; tie = false; } else if (t[x] === best) tie = true; }
+    if (tie || best <= skip) out = null;
+    let note = 0, died = [];
+    if (out) {
+      const bi = (st.bless||[]).indexOf(out);
+      if (st.R[out] === 'prince' && !st.pr) { st.pr = out; note = 'p'; }
+      else if (bi >= 0) { st.bless.splice(bi, 1); note = 'b'; }
+      else died = killMany(st, [out]);
+    }
+    st.vr = { r: st.r, vn: st.vn, o: out, n: note, d: died }; addLog(st, ['v', st.r, out || 0, note, died]); st._fx.push({ t:'vote', o: out, n: note, d: died });
+    if (out && !note && st.R[out] === 'tanner') { finish(st, { w:'t', p:[out] }); return; }
+    afterDeath(st, died, (st.tm === st.r && st.vn === 1) ? 'vote2' : 'night', now);
+  } else if (st.ph === 'hunter') {
+    const t = acts[st.hs] || null, h = st.hs, died = t ? killMany(st, [t]) : [];
+    st.hv = { r: st.r, h, t, d: died }; addLog(st, ['h', h, t || 0, died]); st._fx.push({ t:'shot', h, d: died });
+    const nx = st.nx; st.hs = null; st.nx = null;
+    afterDeath(st, died, nx, now);
+  }
+}
+function botPick(st, p, need, acts){
+  const ro = st.R[p], o = need.o, pids = o.filter(x => x.length > 2 && x[0] !== 'H');
+  if (need.n > 1) return shuffle([...pids]).slice(0, need.n);
+  if (st.ph === 'vote') {
+    if (o.length === 1) return o[0];
+    let pool = pids; if (ROLES[ro].team === 'w') { const safe = pool.filter(x => ROLES[st.R[x]].team !== 'w'); if (safe.length) pool = safe; }
+    const cur = Object.values(acts).filter(x => pool.includes(x));
+    if (cur.length && Math.random() < .55) return pickRand(cur);
+    if (o.includes('x') && Math.random() < .1) return 'x';
+    return pool.length ? pickRand(pool) : o[0];
+  }
+  if (isPack(ro)) { const mate = Object.keys(acts).find(x => isPack(st.R[x]) && typeof acts[x] === 'string'); if (mate && Math.random() < .8) return acts[mate]; }
+  if (ro === 'witch') { const h = o.filter(x => x[0] === 'H'); if (h.length && Math.random() < .45) return pickRand(h); if (Math.random() < .12 && pids.length) return pickRand(pids); return 'n'; }
+  if (ro === 'tm') return Math.random() < .25 ? 'y' : 'n';
+  if (o.includes('n') && Math.random() < (ONCE.includes(ro) ? .7 : .6)) return 'n';
+  return pids.length ? pickRand(pids) : o[0];
+}
+function botsList(n){ return Array.from({length:n}, (_,i) => ({ i:'bot'+(i+1), n: BOT_NAMES[i % BOT_NAMES.length], b:1 })); }
+
+function hostTick(){
+  if (!hosting || !myState) return;
+  const st = clone(myState), now = Date.now(), info = peersInfo();
+  st.hn = me.name;
+  if (st.ph === 'lobby' || st.ph === 'end') hostActs = {};
+  if (st.ph === 'lobby') {
+    for (const id in info) if (info[id].n && !joinOrder.includes(id)) joinOrder.push(id);
+    st.P = [...joinOrder.filter(id => info[id] && info[id].n).map(id => ({ i:id, n:info[id].n })), ...botsList(st.B)].slice(0,16);
+  } else if (st.ph !== 'end') {
+    const nd = needs(st), k = key(st), acts = {}, ba = {};
+    for (const p in nd) {
+      if (isBot(p)) { const m = botMemo[k+p] || (botMemo[k+p] = { t: botPick(st, p, nd[p], acts), at: now + 1500 + Math.random()*4000 });
+        if (now >= m.at && valid(m.t, nd[p])) { acts[p] = m.t; ba[p] = m.t; } }
+      else { const a = info[p] && info[p].a; if (a && a.k === k && valid(a.t, nd[p])) acts[p] = a.t; }
+    }
+    st.ba = ba; hostActs = acts;
+    let go;
+    if (st.ph === 'day') { const al = alive(st); go = now >= st.end || (al.length > 0 && al.every(p => isBot(p) || (info[p] && info[p].y === k))); }
+    else go = now >= st.end || (Object.keys(nd).length > 0 && Object.keys(nd).every(p => p in acts)) || (Object.keys(nd).length === 0 && st.ph === 'night' && now >= st.end - durOf(st,'night') + 4000);
+    if (go) resolve(st, acts, now);
+  }
+  if (JSON.stringify(st) !== JSON.stringify(myState)) { st.s = (myState.s||0) + 1; myState = st; }
+}
+function hostEdit(fn){ if (!hosting || !myState) return; const st = clone(myState); fn(st, Date.now()); st.s = (myState.s||0)+1; myState = st; refresh(); }
+function rolePlan(st){ const c = st.set.c || {}; let list = []; for (const k of ORDER) if (k !== 'villager') for (let i=0;i<(c[k]||0);i++) list.push(k); return list; }
+function setupProblem(st){
+  const n = st.P.length, list = rolePlan(st), c = st.set.c, W = list.filter(isPack).length;
+  if (n < 4) return 'ต้องมีผู้เล่นอย่างน้อย 4 คน (เพิ่มบอทได้)';
+  if (W < 1) return 'ต้องมีหมาป่าอย่างน้อย 1 ตัว (มนุษย์หมาป่า ลูกหมาป่า หรือหมาป่าเดียวดาย)';
+  if (W*2 >= n) return 'หมาป่าเยอะเกินไปสำหรับจำนวนผู้เล่นนี้';
+  if (list.length > n) return `เลือกบทบาทไว้ ${list.length} อย่าง แต่มีผู้เล่น ${n} คน`;
+  if (c.mason === 1) return 'กลุ่มภราดรภาพต้องมีอย่างน้อย 2 คน';
+  return null;
+}
+function preset(n){
+  const c = { wolf: n>=12?3 : n>=8?2 : 1, seer:1 };
+  if (n>=5) c.bodyguard = 1; if (n>=6) c.hunter = 1; if (n>=7) c.witch = 1; if (n>=8) c.cupid = 1;
+  if (n>=9) c.minion = 1; if (n>=10) { c.lycan = 1; c.prince = 1; } if (n>=11) c.tanner = 1;
+  if (n>=13) { c.cub = 1; c.oldwoman = 1; } if (n>=15) { c.sk = 1; c.appr = 1; }
+  return c;
+}
+function startGame(){
+  hostEdit((st, now) => {
+    const n = st.P.length; let roles = rolePlan(st).sort((a,b) => isPack(b) - isPack(a));
+    while (roles.length < n) roles.push('villager');
+    roles = shuffle(roles.slice(0, n));
+    st.R = {}; st.A = {}; st.P.forEach((p,i) => { st.R[p.i] = roles[i]; st.A[p.i] = 1; });
+    Object.assign(st, { r:0, log:[['s', n]], sr:[], used:{}, lp:{}, bless:[], cult:[], L:null, hood:null, dop:null, tg:null, nok:null, dbl:null, tm:null, pr:0,
+      sil:null, ex:null, cu:null, wv:[], att:[], prot:[], hq:[], hs:null, nx:null, nw:null, vr:null, hv:null, win:null, wp:null,
+      iw: roles.filter(isPack).length, g: Math.random().toString(36).slice(2,6) });
+    botMemo = {}; goPhase(st, 'night', now);
+  });
+  revealRole = false;
+}
+
+/* ================= main loop ================= */
+function refresh(){
+  if ($('#game').hidden) return;
+  if (hosting && myState) { hostTick(); view = viewFor(me.pid); clockOff = 0; broadcast(); }
+  const S = view; curS = S;
+  const sig = JSON.stringify([S, myPres, hosting, revealRole, connected]);
+  if (sig !== lastSig) { lastSig = sig; render(S); renderChat(); voiceSync(); renderVoiceUI(); }
+  renderTimer(S); checkFx(S);
+}
+setInterval(refresh, 500);
+
+/* ================= rendering ================= */
+function renderTimer(S){
+  const el = $('#gTimer');
+  if (!S || !S.end || S.ph==='lobby' || S.ph==='end') { el.textContent=''; return; }
+  const left = Math.max(0, Math.ceil((S.end - (Date.now() + clockOff))/1000));
+  el.textContent = Math.floor(left/60) + ':' + String(left%60).padStart(2,'0');
+  el.classList.toggle('low', left <= 10);
+}
+const roleTag = r => r && ROLES[r] ? `<span class="tag ${TEAM[ROLES[r].team].cls}">${ROLES[r].th}</span>` : '';
+function actOf(S, p){ if (p === me.pid) { const a = myPres.a; return a && a.k === key(S) ? a.t : undefined; } return S.acts ? S.acts[p] : undefined; }
+function resultText(S, e){
+  const [, kind, t, yes] = e, n = esc(nameOf(S, t));
+  if (kind === 's') return yes ? `<span class="t-wolf">${n} เป็นหมาป่า</span>` : `<span class="t-village">${n} ไม่ใช่หมาป่า</span>`;
+  if (kind === 'a') return yes ? `<span class="t-solo">${n} มีบทบาทพิเศษ</span>` : `<span class="t-village">${n} ไม่มีบทบาทพิเศษ</span>`;
+  if (kind === 'o') return yes ? `<span class="t-wolf">${n} คือผู้หยั่งรู้</span>` : `<span class="t-village">${n} ไม่ใช่ผู้หยั่งรู้</span>`;
+  if (kind === 'i') return yes ? `<span class="t-wolf">${n} หรือคนข้างๆ มีหมาป่า</span>` : `<span class="t-village">${n} และคนข้างๆ ไม่มีหมาป่า</span>`;
+  return '';
+}
+function liveResult(S, ro, t){
+  if (!t || t === 'n') return '';
+  const kind = (ro === 'seer' || ro === 'appr') ? 's' : ro === 'aura' ? 'a' : ro === 'sorc' ? 'o' : ro === 'pi' ? 'i' : null;
+  if (!kind) return '';
+  const yes = kind==='s' ? looksWolf(S.R[t]) : kind==='a' ? isSpecial(S.R[t]) : kind==='o' ? S.R[t]==='seer' : [t,...neighbors(S,t)].some(x => looksWolf(S.R[x]));
+  return resultText(S, [0, kind, t, yes?1:0]);
+}
+const ACT_TXT = {
+  pack:'เลือกเหยื่อคืนนี้ (ถ้าฝูงเลือกต่างกัน ใช้คนที่ถูกเลือกมากสุด)', seer:'ส่องดู 1 คน ว่าเป็นหมาป่าหรือไม่', appr:'ผู้หยั่งรู้ตายแล้ว คุณส่องแทนได้ 1 คน',
+  aura:'ส่องออร่า 1 คน ว่ามีบทบาทพิเศษไหม', pi:'ตรวจ 1 คน กับคนที่นั่งติดกัน (ใช้ได้ครั้งเดียว)', sorc:'ตามหาผู้หยั่งรู้ ส่องได้ 1 คน',
+  bodyguard:'คุ้มกัน 1 คนคืนนี้', priest:'ให้พร 1 คน (ใช้ได้ครั้งเดียว)', huntress:'ล่า 1 คน (ใช้ได้ครั้งเดียว)', revealer:'ชี้ตัวหมาป่า ถ้าพลาดคุณตายเอง',
+  cupid:'เลือกคู่รัก 2 คน (แตะ 2 การ์ด)', oldwoman:'ไล่ 1 คนออกนอกหมู่บ้าน', spell:'ร่ายเวทให้ 1 คนห้ามพูดพรุ่งนี้', tm:'ก่อเรื่องให้พรุ่งนี้โหวต 2 รอบไหม (ใช้ได้ครั้งเดียว)',
+  sk:'เลือกเหยื่อคืนนี้', chupa:'เลือกเป้าหมาย ถ้าเป็นหมาป่าจะตาย', cult:'ชวน 1 คนเข้าลัทธิ', hoodlum:'เลือกเป้าหมายของคุณ', doppel:'เลือกคนที่คุณจะเลียนแบบ', witch:'ใช้พลังแม่มด (ใช้ได้ครั้งเดียว)'
+};
+const OPT_TXT = { n:'ไม่ใช้พลังคืนนี้', y:'ก่อเรื่อง', x:'งดออกเสียง' };
+const PASSIVE = 'คืนนี้คุณไม่มีอะไรต้องทำ ทำทีจิ้มจอเล่นด้วย จะได้ไม่มีใครจับสังเกต';
+
+function render(S){
+  $('#gCode').textContent = code || '----';
+  $('#copyBtn').hidden = solo;
+  if (!S) {
+    document.body.dataset.ph = '';
+    $('#gBanner').innerHTML = `<h2>กำลังเข้าห้อง ${esc(code || '')}…</h2><p>รอการเชื่อมต่อ</p>`;
+    ['#gSeats','#gRole','#gPrompt','#gHost','#gLog'].forEach(s => $(s).innerHTML = '');
+    return;
+  }
+  const R = S.R || {}, k = key(S), r = S.r;
+  const meIn = S.P.find(p => p.i === me.pid);
+  const myRole = meIn && S.ph !== 'lobby' ? R[me.pid] : null;
+  const amAlive = meIn && S.ph !== 'lobby' ? !!S.A[me.pid] : !!meIn;
+  const ghost = S.ph === 'end' || (S.ph !== 'lobby' && (!meIn || !amAlive));
+  const packView = isPack(myRole) || myRole === 'minion';
+  const nd = needs(S), myNeed = S.ph !== 'lobby' ? nd[me.pid] : null;
+  const myPick = myNeed ? actOf(S, me.pid) : undefined;
+  let seatOpts = myNeed ? myNeed.o.filter(x => x.length > 2 && x[0] !== 'H') : [];
+  if (myNeed && myNeed.lock && myPick) seatOpts = [];
+  const picked = [].concat(myPick || []);
+
+  document.body.dataset.ph = S.ph;
+  $('#gPhase').dataset.ph = S.ph;
+  $('#gPhaseTxt').textContent = PH_TH[S.ph] + (r && S.ph !== 'end' && S.ph !== 'lobby' ? ' · รอบ ' + r : '');
+
+  /* banner */
+  const N = id => esc(nameOf(S, id)), RN = id => roleTh(R[id]);
+  const list = ids => ids.map(id => `${N(id)} (${RN(id)})`).join(', ');
+  let bh = '', bp = [];
+  const hostGone = !hosting && !solo && !connected;
+  if (S.ph === 'lobby') { bh = 'รอชาวบ้านมารวมตัว'; bp.push(solo ? 'โหมดฝึก: คุณเล่นกับบอท ปรับบทบาทและจำนวนบอทได้ทางขวา' : `ส่งรหัส <b class="big">${esc(code)}</b> หรือกด "คัดลอกลิงก์" ส่งให้เพื่อน แล้วโฮสต์กดเริ่มเกมเมื่อพร้อม · อย่างน้อย 4 คน`); }
+  else if (S.ph === 'night') {
+    bh = S.ns === 2 ? `คืนที่ ${r} · ใกล้รุ่งสาง` : `คืนที่ ${r} · หมู่บ้านหลับใหล`;
+    const vr = S.vr && S.vr.r === r - 1 ? S.vr : null;
+    if (vr) bp.push(!vr.o ? 'ผลโหวตล่าสุด: ไม่มีใครถูกประหาร' : vr.n === 'p' ? `ผลโหวตล่าสุด: ${N(vr.o)} เปิดตัวเป็นเจ้าชายและรอดจากการประหาร` : vr.n === 'b' ? `ผลโหวตล่าสุด: ${N(vr.o)} รอดเพราะได้รับพรจากบาทหลวง` : `ผลโหวตล่าสุด: ประหาร ${list(vr.d)}`);
+    else bp.push('บทบาทที่มีพลังกำลังลงมือในความมืด');
+  } else if (S.ph === 'day') {
+    const nw = S.nw && S.nw.r === r ? S.nw : null;
+    bh = nw && nw.d.length ? `เช้าวันที่ ${r} · พบศพ ${nw.d.length} ราย` : `เช้าวันที่ ${r} · คืนนี้ไม่มีใครตาย`;
+    if (nw && nw.d.length) bp.push('ผู้เสียชีวิต: ' + list(nw.d));
+    if (S.hv && S.hv.r === r && S.hv.t) bp.push(`นายพราน ${N(S.hv.h)} ยิง ${list(S.hv.d)}`);
+    if (S.ex && S.ex.r === r && S.A[S.ex.p]) bp.push(`${N(S.ex.p)} ถูกหญิงแก่ไล่ออกนอกหมู่บ้าน วันนี้ห้ามพูดและห้ามโหวต`);
+    if (S.sil && S.sil.r === r && S.A[S.sil.p]) bp.push(`${N(S.sil.p)} โดนเวทมนตร์ วันนี้ห้ามพูดและห้ามโหวต`);
+    if (S.tm === r) bp.push('มีคนก่อเรื่อง วันนี้จะโหวตประหาร 2 รอบ');
+    bp.push('ถกเถียงกันว่าใครคือตัวร้าย');
+  } else if (S.ph === 'vote') {
+    bh = S.vn === 2 ? 'โหวตประหารรอบที่ 2' : 'ถึงเวลาโหวตประหาร';
+    if (S.vn === 2 && S.vr) bp.push(!S.vr.o ? 'รอบแรกไม่มีใครถูกประหาร' : S.vr.n ? `รอบแรก ${N(S.vr.o)} รอดจากการประหาร` : `รอบแรกประหาร ${list(S.vr.d)}`);
+    bp.push('เลือกคนที่คุณสงสัยที่สุด เปลี่ยนใจได้จนหมดเวลา');
+  } else if (S.ph === 'hunter') { bh = `นายพราน ${N(S.hs)} กำลังเล็งปืน`; bp.push('ก่อนสิ้นใจ นายพรานยิงพาใครไปด้วยได้ 1 คน'); }
+  else if (S.ph === 'end') {
+    const W = { v:'ชาวบ้านกำจัดตัวร้ายได้หมด', w:'ฝูงหมาป่ายึดหมู่บ้านได้แล้ว', s:'ฆาตกรรอดเป็นคนสุดท้าย', t:'คนบ้าคนผีทะเลได้สมใจ', l:'คู่รักรอดเป็น 2 คนสุดท้าย', c:'ทั้งหมู่บ้านเข้าลัทธิแล้ว', lone:'หมาป่าเดียวดายครองหมู่บ้าน' };
+    bh = W[S.win] || 'จบเกม';
+    bp.push('ผู้ชนะ: ' + (S.wp || []).map(id => N(id)).join(', '));
+  }
+  if (hostGone && S.ph !== 'end') bp.push(`<span style="color:var(--blood)">ขาดการเชื่อมต่อกับโฮสต์ กำลังเชื่อมใหม่…</span>`);
+  $('#gBanner').innerHTML = `<h2 class="${S.ph==='end'?'win':''}">${bh}</h2><p>${bp.join('<br>')}</p>`;
+
+  /* seats */
+  const votes = {}, wolfPicks = {};
+  if (S.ph === 'vote') for (const p of alive(S)) { const t = actOf(S, p); if (t && t !== 'x') (votes[t] = votes[t] || []).push(p); }
+  if (S.ph === 'night' && S.ns === 1 && (isPack(myRole) || ghost)) for (const p of alive(S)) if (isPack(R[p])) [].concat(actOf(S, p) || []).forEach(t => (wolfPicks[t] = wolfPicks[t] || []).push(p));
+  const online = id => isBot(id) || (S.on || []).includes(id);
+  const inCult = x => (S.cult||[]).includes(x) || R[x] === 'cult';
+  const amCult = meIn && inCult(me.pid) && S.cult && S.cult.length + 1 > 1 && S.ph !== 'lobby';
+
+  $('#gSeats').innerHTML = S.P.map(p => {
+    const isMe = p.i === me.pid, dead = S.ph !== 'lobby' && !S.A[p.i], ro = R[p.i];
+    const tags = [], lobby = S.ph === 'lobby';
+    if (isMe) tags.push('<span class="tag me">คุณ</span>');
+    if (p.i === S.h) tags.push('<span class="tag">โฮสต์</span>');
+    if (p.b) tags.push('<span class="tag">บอท</span>');
+    if (!online(p.i)) tags.push('<span class="tag">ออฟไลน์</span>');
+    if (!lobby) {
+      let show = dead || ghost || (isMe && revealRole);
+      if (!isMe && packView && isPack(ro)) show = true;
+      if (!isMe && myRole === 'mason' && ro === 'mason') show = true;
+      if (!isMe && S.L && S.L.includes(me.pid) && S.L.includes(p.i)) show = true;
+      if (S.pr === p.i) show = true;
+      if (show) tags.push(roleTag(ro));
+      else if (!isMe && myRole === 'beholder' && (S.bh || []).includes(p.i)) tags.push('<span class="tag info">ผู้หยั่งรู้</span>');
+      if (S.L && S.L.includes(p.i) && (ghost || S.L.includes(me.pid) || myRole === 'cupid')) tags.push('<span class="tag info">คู่รัก</span>');
+      if ((S.cult||[]).includes(p.i) && (ghost || amCult)) tags.push('<span class="tag solo">ลัทธิ</span>');
+      if (S.hood && S.hood.m.includes(p.i) && (ghost || S.hood.p === me.pid)) tags.push('<span class="tag info">เป้าอันธพาล</span>');
+      if (S.dop && S.dop.m === p.i && (ghost || S.dop.p === me.pid)) tags.push('<span class="tag info">ถูกเลียนแบบ</span>');
+      if ((S.ph === 'day' || S.ph === 'vote') && !dead && ((S.ex && S.ex.r === r && S.ex.p === p.i) || (S.sil && S.sil.r === r && S.sil.p === p.i))) tags.push('<span class="tag info">ห้ามพูด</span>');
+      if (S.ph === 'day' && !dead && (p.b || (S.rdy || []).includes(p.i))) tags.push('<span class="tag ok">พร้อมโหวต</span>');
+      if (dead) tags.push('<span class="tag">ตายแล้ว</span>');
+    }
+    let under = '';
+    if (votes[p.i]) under = 'โหวตโดย ' + votes[p.i].map(v => esc(nameOf(S, v))).join(', ');
+    if (wolfPicks[p.i]) under = 'เป้าของ ' + wolfPicks[p.i].map(v => esc(nameOf(S, v))).join(', ');
+    const can = seatOpts.includes(p.i);
+    const ally = !isMe && packView && isPack(ro) && S.ph !== 'lobby';
+    return `<div data-pid="${esc(p.i)}" class="seat${can?' can':''}${picked.includes(p.i)?' picked':''}${dead?' dead':''}${ally?' ally':''}" ${can?`tabindex="0" role="button" data-t="${esc(p.i)}" aria-label="เลือก ${esc(p.n)}"`:''}>
+      ${votes[p.i] ? `<span class="count">${votes[p.i].length}</span>` : ''}<div class="av" style="background:hsl(${hue(p.i)} 55% 72%)">${esc([...p.n][0] || '?')}</div>
+      <div class="nm">${esc(p.n)}</div><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div class="tags">${tags.join('')}</div><div class="voters">${under}</div><div class="say"></div></div>`;
+  }).join('') || '<div class="muted">ยังไม่มีใครในห้อง</div>';
+  $('#gSeats').querySelectorAll('[data-t]').forEach(el => {
+    const go = () => {
+      const t = el.dataset.t;
+      if (myNeed.n > 1) { let cur = Array.isArray(myPick) ? [...myPick] : []; cur = cur.includes(t) ? cur.filter(x => x !== t) : [...cur, t]; if (cur.length > myNeed.n) cur.shift(); setPres({ a:{ k, t: cur.length === myNeed.n ? cur : cur } }); }
+      else setPres({ a:{ k, t } });
+    };
+    el.onclick = go; el.onkeydown = e => { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); go(); } };
+  });
+
+  /* role card */
+  if (meIn && myRole) {
+    const RO = ROLES[myRole], T = TEAM[RO.team];
+    const changed = S.cu && S.cu.p === me.pid ? '<p class="t-wolf" style="margin:8px 0 0">คุณถูกหมาป่ากัด และกลายเป็นมนุษย์หมาป่าแล้ว</p>' : (S.dop && S.dop.done && S.dop.p === me.pid ? '<p class="t-solo" style="margin:8px 0 0">คนที่คุณเลียนแบบตายแล้ว คุณได้บทบาทนี้แทน</p>' : '');
+    $('#gRole').innerHTML = `<div class="rolecard${revealRole?'':' hide'}"><div class="label">บทบาทของคุณ</div>
+      <div class="rbody"><div class="rhead"><div class="ico ${T.t}">${TICON[RO.team]}</div><div><h3>${RO.th}</h3><div class="muted">${T.th}</div></div></div>
+      <p class="muted" style="margin:10px 0 0">${RO.desc}</p>${changed}</div>
+      <button class="btn-sm" id="revealBtn">${revealRole?'ซ่อนบทบาท':'แตะเพื่อดูบทบาท'}</button></div>`;
+    $('#revealBtn').onclick = () => { revealRole = !revealRole; lastSig=''; refresh(); };
+  } else if (S.ph !== 'lobby' && !meIn) $('#gRole').innerHTML = '<div class="rolecard"><div class="label">ผู้ชม</div><p class="muted" style="margin:0">เกมเริ่มไปแล้ว คุณดูในฐานะผู้ชมและเห็นบทบาทของทุกคน รอบหน้าจะได้เข้าร่วม</p></div>';
+  else $('#gRole').innerHTML = '';
+
+  /* prompt */
+  let pr = '';
+  const pickTxt = () => { if (myPick === undefined) return 'ยังไม่ได้เลือก'; return [].concat(myPick).map(x => OPT_TXT[x] || (x[0]==='H' ? 'ช่วย '+esc(nameOf(S,x.slice(1))) : esc(nameOf(S,x)))).join(', '); };
+  if (S.ph === 'lobby') pr = meIn ? `<b>คุณอยู่ในห้องแล้ว</b><span class="muted">รอโฮสต์ ${esc(S.hn || '')} กดเริ่มเกม</span>` : '<span class="muted">กำลังเข้าร่วม…</span>';
+  else if (S.ph === 'end') pr = '<b>เกมจบแล้ว</b><span class="muted">บทบาทของทุกคนเปิดเผยบนการ์ดแล้ว</span>';
+  else if (meIn && !amAlive) pr = '<b>คุณตายแล้ว</b><span class="muted">ตอนนี้คุณเป็นวิญญาณ เห็นบทบาทของทุกคน แต่ห้ามบอกคนที่ยังมีชีวิตนะ</span>';
+  else if (meIn) {
+    if (S.ph === 'night') {
+      if (myNeed) {
+        const label = isPack(myRole) ? ACT_TXT.pack : ACT_TXT[myRole] || 'เลือกเป้าหมาย';
+        pr = `<b>${label}</b>`;
+        if (isPack(myRole) && S.dbl === r) pr += '<span class="t-wolf">ลูกหมาป่าตาย คืนนี้ฝูงฆ่าได้ 2 คน แตะ 2 การ์ด</span>';
+        if (myRole === 'hoodlum') pr += `<span class="muted">แตะ ${myNeed.n} การ์ด</span>`;
+        if (myRole === 'witch') pr += `<span class="muted">${(S.wv||[]).length ? 'เหยื่อของหมาป่าคืนนี้: ' + S.wv.map(v => esc(nameOf(S,v))).join(', ') : 'คืนนี้หมาป่าไม่ได้ฆ่าใคร'} · แตะการ์ดเพื่อฆ่า หรือกดปุ่มด้านล่าง</span>`;
+        if (myRole === 'revealer' || myRole === 'priest' || myRole === 'huntress' || myRole === 'pi') pr += '<span class="muted">แตะการ์ดผู้เล่น หรือกดไม่ใช้พลัง</span>';
+        if (myNeed.lock) pr += '<span class="muted">เลือกได้คนเดียว เลือกแล้วเปลี่ยนไม่ได้</span>';
+        const btns = myNeed.o.filter(x => x.length <= 2 || x[0] === 'H');
+        if (btns.length) pr += `<div class="opts">${btns.map(x => `<button class="btn-sm${picked.includes(x)?' btn-main':''}" data-o="${esc(x)}" ${myNeed.lock && myPick ? 'disabled' : ''}>${x[0]==='H' ? 'ใช้ยาช่วย '+esc(nameOf(S,x.slice(1))) : OPT_TXT[x]}</button>`).join('')}</div>`;
+        const lr = (S.lr && S.lr[3] === k && S.lr[1] === myPick) ? resultText(S, [0, S.lr[0], S.lr[1], S.lr[2]]) : '';
+        pr += lr ? `<span class="result">${lr}</span>` : `<span>เลือก: <b>${pickTxt()}</b></span>`;
+      } else if (isPack(myRole) && S.nok === r) pr = '<b>คืนนี้ฝูงล่าไม่ได้</b><span class="muted">เมื่อคืนพวกคุณกินผู้ติดโรคเข้าไป</span>';
+      else pr = `<b>หลับตาแล้วรอ</b><span class="muted">${PASSIVE}</span>`;
+    } else if (S.ph === 'day') {
+      const ready = myPres.y === k;
+      pr = `<b>คุยกันให้รู้เรื่อง</b><span class="muted">ถ้าทุกคนพร้อม จะเข้าสู่รอบโหวตทันที</span><button id="readyBtn" class="${ready?'':'btn-main'}">${ready?'ยกเลิกพร้อมโหวต':'พร้อมโหวต'}</button>`;
+    } else if (S.ph === 'vote') {
+      if (!myNeed) pr = '<b>วันนี้คุณโหวตไม่ได้</b><span class="muted">คุณถูกห้ามพูดและห้ามโหวต</span>';
+      else if (myRole === 'pacifist') pr = `<b>คุณเป็นผู้รักสงบ</b><span class="muted">ทำได้แค่งดออกเสียง</span><button data-o="x" class="${myPick==='x'?'btn-main':''}">งดออกเสียง</button>`;
+      else pr = `<b>แตะการ์ดเพื่อโหวต</b><span>คุณโหวต: <b>${pickTxt()}</b></span>${myNeed.o.includes('x') ? `<button data-o="x" class="btn-ghost">งดออกเสียง</button>` : '<span class="muted">คุณงดออกเสียงไม่ได้</span>'}`;
+    } else if (S.ph === 'hunter') pr = S.hs === me.pid ? `<b>ยิงพาใครไปด้วย</b><span class="muted">แตะการ์ดผู้เล่นที่ยังมีชีวิต</span><span>เป้า: <b>${pickTxt()}</b></span>` : '<span class="muted">รอนายพรานตัดสินใจ…</span>';
+  }
+  const mine = (S.sr || []).filter(e => e[4] === me.pid);
+  if (meIn && mine.length && S.ph !== 'lobby') pr += '<div class="seerlist"><span class="label">ผลที่คุณส่องมา</span>' + mine.map(e => `<span>คืน ${e[0]}: ${resultText(S, e)}</span>`).join('') + '</div>';
+  $('#gPrompt').innerHTML = pr ? `<div class="prompt">${pr}</div>` : '';
+  $('#gPrompt').querySelectorAll('[data-o]').forEach(b => b.onclick = () => setPres({ a:{ k, t: b.dataset.o } }));
+  const rb = $('#readyBtn'); if (rb) rb.onclick = () => setPres({ y: myPres.y === k ? null : k });
+
+  /* host controls */
+  let hc = '';
+  if (hosting) {
+    if (S.ph === 'lobby') {
+      const c = S.set.c || {}, prob = setupProblem(S), plan = rolePlan(S);
+      const groups = ['v','w','s'].map(t => `<div class="rp-group"><span class="label ${TEAM[t].t}">${TEAM[t].th}</span><div class="rp-grid">` +
+        ORDER.filter(x => x !== 'villager' && ROLES[x].team === t).map(x => ROLES[x].max > 1
+          ? `<span class="chip-step${c[x]?' on':''}">${ROLES[x].th}<button data-rd="${x}" aria-label="ลด">−</button><b>${c[x]||0}</b><button data-ri="${x}" aria-label="เพิ่ม">+</button></span>`
+          : `<button class="chip${c[x]?' on':''}" data-rt="${x}" aria-pressed="${c[x]?'true':'false'}">${ROLES[x].th}</button>`).join('') + '</div></div>').join('');
+      const step = (id, label, val) => `<div class="set-row"><span>${label}</span><div class="stepper"><button class="btn-sm" data-dec="${id}" aria-label="ลด">−</button><span>${val}</span><button class="btn-sm" data-inc="${id}" aria-label="เพิ่ม">+</button></div></div>`;
+      hc = `<div class="panel"><div class="label">ตั้งค่าเกม (โฮสต์)</div><div class="settings">
+        ${step('B','จำนวนบอท',S.B)}${step('dt','เวลาคุย (วินาที)',S.set.dt)}${step('nt','เวลากลางคืน (วินาที)',S.set.nt)}${step('vt','เวลาโหวต (วินาที)',S.set.vt)}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">บทบาท</span><button class="btn-sm" id="presetBtn">จัดแนะนำตามจำนวนคน</button></div>
+        ${groups}
+        <div class="muted">ผู้เล่น ${S.P.length} คน · บทบาทพิเศษ ${plan.length} · ชาวบ้านธรรมดา ${Math.max(0, S.P.length - plan.length)}</div>
+        ${prob ? `<div style="color:var(--blood);font-size:14px">${prob}</div>` : ''}
+        <button class="btn-main" id="startBtn" ${prob?'disabled':''}>เริ่มเกม</button></div>`;
+    } else if (S.ph === 'end') hc = `<div class="panel"><div class="label">โฮสต์</div><button class="btn-main" id="againBtn">เล่นอีกรอบ</button></div>`;
+    else hc = `<div class="panel"><div class="label">โฮสต์</div><button id="skipBtn">${S.ph==='day'?'เริ่มโหวตเลย':'ข้ามไปขั้นต่อไป'}</button><span class="muted" style="font-size:13px">คนที่ยังไม่เลือกจะถือว่าไม่ทำอะไร</span></div>`;
+  }
+  $('#gHost').innerHTML = hc;
+  const lim = { B:[0,15,1], dt:[30,300,30], nt:[20,120,5], vt:[20,120,10] };
+  $('#gHost').querySelectorAll('[data-inc],[data-dec]').forEach(b => b.onclick = () => {
+    const id = b.dataset.inc || b.dataset.dec, d = b.dataset.inc ? 1 : -1, [lo,hi,st] = lim[id];
+    hostEdit(x => { if (id==='B') x.B = Math.min(hi, Math.max(lo, x.B + d*st)); else x.set[id] = Math.min(hi, Math.max(lo, x.set[id] + d*st)); });
+  });
+  $('#gHost').querySelectorAll('[data-rt]').forEach(b => b.onclick = () => hostEdit(x => { const id = b.dataset.rt; x.set.c[id] = x.set.c[id] ? 0 : 1; }));
+  $('#gHost').querySelectorAll('[data-ri],[data-rd]').forEach(b => b.onclick = () => hostEdit(x => { const id = b.dataset.ri || b.dataset.rd, d = b.dataset.ri ? 1 : -1; x.set.c[id] = Math.min(ROLES[id].max, Math.max(0, (x.set.c[id]||0) + d)); }));
+  const pb = $('#presetBtn'); if (pb) pb.onclick = () => hostEdit(x => { x.set.c = preset(x.P.length); });
+  const sb = $('#startBtn'); if (sb) sb.onclick = startGame;
+  const kb = $('#skipBtn'); if (kb) kb.onclick = () => hostEdit((x, now) => { x.end = now; });
+  const ab = $('#againBtn'); if (ab) ab.onclick = () => { hostEdit(x => { x.ph = 'lobby'; x.r = 0; x.R = {}; x.A = {}; x.end = 0; x.win = null; x.wp = null; x.ba = {}; }); setPres({ a:null, y:null }); };
+
+  /* log */
+  const lines = (S.log || []).map(e => {
+    const [t,a,b,c,d] = e;
+    if (t==='s') return `เกมเริ่มด้วยผู้เล่น ${a} คน`;
+    if (t==='n') return b && b.length ? `คืน ${a}: ตาย ${list(b)}` : `คืน ${a}: ไม่มีใครตาย`;
+    if (t==='v') return !b ? `วัน ${a}: ไม่มีใครถูกประหาร` : c==='p' ? `วัน ${a}: ${N(b)} เป็นเจ้าชาย รอดจากการประหาร` : c==='b' ? `วัน ${a}: ${N(b)} รอดเพราะพรของบาทหลวง` : `วัน ${a}: ประหาร ${list(d || [b])}`;
+    if (t==='h') return b ? `นายพราน ${N(a)} ยิง ${list(c && c.length ? c : [b])}` : `นายพราน ${N(a)} ไม่ยิงใคร`;
+    if (t==='w') return 'จบเกม';
+    return '';
+  }).filter(Boolean).reverse();
+  $('#gLog').innerHTML = lines.length ? lines.map(l => `<div>${l}</div>`).join('') : '<div class="muted">ยังไม่มีเหตุการณ์</div>';
+}
+
+/* ================= chat (relayed and filtered by the host) ================= */
+let curS = null, chatTab = 'v', chatSig = '', chatLog = [], chatG = null;
+const msgs = new Map(); let unread = {};
+function resetChat(){ msgs.clear(); chatTab = 'v'; unread = {}; chatSig = ''; }
+function ctxFor(S, pid){
+  if (!S) return null;
+  const lobby = S.ph === 'lobby', meIn = S.P.find(p => p.i === pid);
+  const role = meIn && !lobby ? S.R[pid] : null;
+  const ghost = !lobby && (S.ph === 'end' || !meIn || !S.A[pid]);
+  return { S, pid, lobby, meIn, role, ghost, alive: !!meIn && (lobby || !!S.A[pid]), pack: isPack(role) };
+}
+const ctx = () => ctxFor(curS, me.pid);
+function silenced(S, pid){ const r = S.r; return (S.ph==='day' || S.ph==='vote') && ((S.ex && S.ex.r===r && S.ex.p===pid) || (S.sil && S.sil.r===r && S.sil.p===pid)); }
+function canSee(c, ch){
+  if (ch === 'v') return true;
+  if (!c || c.lobby) return false;
+  if (ch === 'w') return (c.pack && c.alive) || c.ghost;
+  if (ch === 'g') return c.ghost;
+  return false;
+}
+function canSend(c, ch){
+  if (!c) return { ok:false, why:'' };
+  const S = c.S;
+  if (ch === 'v') {
+    if (c.lobby || S.ph === 'end') return { ok:true };
+    if (c.ghost) return { ok:false, why:'คุณตายแล้ว คุยได้ที่ห้องวิญญาณ' };
+    if (S.ph === 'night') return { ok:false, why:'กลางคืน หมู่บ้านหลับอยู่' };
+    if (silenced(S, c.pid)) return { ok:false, why:'วันนี้คุณถูกห้ามพูด' };
+    return { ok:true };
+  }
+  if (ch === 'w') return c.pack && c.alive && S.ph !== 'end' ? { ok:true } : { ok:false, why:'อ่านได้อย่างเดียว' };
+  if (ch === 'g') return c.ghost && S.ph !== 'end' ? { ok:true } : { ok:false, why:'' };
+  return { ok:false, why:'' };
+}
+function nameOfAny(pid){ const p = myState && myState.P.find(x => x.i === pid); if (p) return p.n; if (pid === me.pid) return me.name; const c = conns.get(pid); return c ? c.n : 'ผู้ชม'; }
+function relayChat(pid, ch, txt){
+  const st = myState; if (!st || !['v','w','g'].includes(ch) || typeof txt !== 'string') return;
+  txt = txt.replace(/[\u0000-\u001f]/g,'').trim().slice(0,120); if (!txt) return;
+  if (!canSend(ctxFor(st, pid), ch).ok) return;
+  if (chatG !== st.g) { chatLog = []; chatG = st.g; }
+  const m = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), pid, n: nameOfAny(pid), ch, txt };
+  chatLog.push(m); if (chatLog.length > 150) chatLog.shift();
+  for (const x of [me.pid, ...conns.keys()]) {
+    if (!canSee(ctxFor(st, x), ch)) continue;
+    if (x === me.pid) { addMsg(m); renderChat(); continue; }
+    const c = conns.get(x); if (c && c.on && c.conn.open) { try { c.conn.send({ t:'chat', m }); } catch(_){} }
+  }
+}
+function sendChatHistory(pid){
+  const st = myState; if (!st) return;
+  if (chatG !== st.g) { chatLog = []; chatG = st.g; }
+  const c = ctxFor(st, pid), cc = conns.get(pid);
+  if (cc) { try { cc.conn.send({ t:'chatlog', m: chatLog.filter(m => canSee(c, m.ch)) }); } catch(_){} }
+}
+function addMsg(m){
+  if (!m || typeof m.id !== 'string' || msgs.has(m.id) || !['v','w','g'].includes(m.ch)) return;
+  msgs.set(m.id, { pid: String(m.pid), n: clip(m.n) || 'ผู้เล่น', ch: m.ch, txt: String(m.txt).slice(0,120), at: Date.now() });
+  if (m.ch !== chatTab) unread[m.ch] = 1;
+  if (m.pid !== me.pid && !cfg.mute[m.pid] && Date.now() - joinedAt > 3000) sfx('msg');
+  if (msgs.size > 200) msgs.delete(msgs.keys().next().value);
+}
+function sendChat(txt){
+  const c = ctx(), s = canSend(c, chatTab);
+  if (!s.ok) { toast(s.why || 'ส่งข้อความในห้องนี้ไม่ได้'); return; }
+  if (hosting) relayChat(me.pid, chatTab, txt);
+  else if (hostConn && hostConn.open) { try { hostConn.send({ t:'chat', ch: chatTab, txt }); } catch(_){} }
+  else toast('ยังไม่ได้เชื่อมต่อกับโฮสต์');
+}
+$('#chatForm').addEventListener('submit', e => { e.preventDefault(); const i = $('#chatIn'); const t = i.value.replace(/[\u0000-\u001f]/g,'').trim(); if (!t) return; i.value = ''; sendChat(t); });
+function renderChat(){
+  const c = ctx();
+  const tabs = [['v','หมู่บ้าน'],['w','ฝูงหมาป่า'],['g','วิญญาณ']].filter(([ch]) => canSee(c, ch));
+  if (!tabs.some(t => t[0] === chatTab)) chatTab = 'v';
+  unread[chatTab] = 0;
+  const list = [...msgs.values()].filter(m => m.ch === chatTab && canSee(c, m.ch) && !cfg.mute[m.pid]).sort((a,b) => a.at - b.at).slice(-80);
+  const send = canSend(c, chatTab);
+  const sig = JSON.stringify([tabs, chatTab, unread, list.map(m => m.pid + m.at), send]);
+  if (sig === chatSig) return; chatSig = sig;
+  $('#chatTabs').innerHTML = tabs.map(([ch,l]) => `<button type="button" class="tab${ch===chatTab?' on':''}" data-ch="${ch}">${l}${unread[ch]?'<span class="dotn"></span>':''}</button>`).join('');
+  $('#chatTabs').querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { chatTab = b.dataset.ch; renderChat(); });
+  const box = $('#chatMsgs'), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  const empty = { v:'ยังไม่มีข้อความในหมู่บ้าน', w:'ห้องลับของฝูงหมาป่า คนอื่นไม่ได้รับข้อความในนี้เลย', g:'ห้องของคนที่ตายแล้ว คนที่ยังมีชีวิตไม่ได้รับข้อความในนี้' }[chatTab];
+  box.innerHTML = list.length ? list.map(m => `<div class="msg${m.pid===me.pid?' mine':''}"><b>${esc(m.n)}</b>${esc(m.txt)}</div>`).join('') : `<div class="muted">${empty}</div>`;
+  if (atBottom) box.scrollTop = box.scrollHeight;
+  $('#chatIn').disabled = !send.ok; $('#chatSend').disabled = !send.ok;
+  $('#chatIn').placeholder = chatTab === 'w' ? 'คุยกับฝูง (คนอื่นไม่เห็น)' : chatTab === 'g' ? 'คุยกับวิญญาณด้วยกัน' : 'พิมพ์ข้อความถึงทุกคน';
+  $('#chatLock').textContent = send.ok ? '' : send.why;
+}
+
+/* ================= voice (WebRTC, gated by the host) ================= */
+const V = { stream:null, micOk:false, calls:new Map(), localAn:null, localSrc:null, muted:false, ptt:false, deaf:false, loopEl:null, started:false, needGesture:false, myLvl:0 };
+const transmitting = () => V.micOk && (cfg.mode === 'open' ? !V.muted : V.ptt);
+async function voiceStart(){ if (solo || V.started) return; V.started = true; await micOpen(); voiceSync(); }
+async function micOpen(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { V.micOk = false; renderVoiceUI(); return; }
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: cfg.mic ? { ideal: cfg.mic } : undefined, echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+    V.micOk = true; setMicStream(s); listDevices();
+  } catch(e) {
+    V.micOk = false; toast('เปิดไมค์ไม่ได้ ยังฟังเพื่อนได้ตามปกติ อนุญาตไมค์ได้ที่ไอคอนแม่กุญแจข้างแถบที่อยู่');
+  }
+  renderVoiceUI();
+}
+function silentTrack(){ const a = audio(); if (!a) return null; return a.createMediaStreamDestination().stream.getAudioTracks()[0]; }
+function baseTrack(){ return V.stream ? V.stream.getAudioTracks()[0] : silentTrack(); }
+function setMicStream(s){
+  const old = V.stream; V.stream = s;
+  if (V.localSrc) { try { V.localSrc.disconnect(); } catch(_){} V.localSrc = null; V.localAn = null; }
+  const a = audio();
+  if (s && a) { V.localAn = a.createAnalyser(); V.localAn.fftSize = 512; V.localSrc = a.createMediaStreamSource(s); V.localSrc.connect(V.localAn); }
+  for (const c of V.calls.values()) {
+    const t = baseTrack(); if (!t) continue; const nt = t.clone();
+    const pc = c.call.peerConnection, sender = pc && pc.getSenders().find(x => !x.track || x.track.kind === 'audio');
+    if (sender) { sender.replaceTrack(nt).catch(()=>{}); if (c.track) c.track.stop(); c.track = nt; } else nt.stop();
+  }
+  if (old && old !== s) old.getTracks().forEach(t => t.stop());
+  if (V.loopEl) V.loopEl.srcObject = s;
+  applyGates();
+}
+function voiceSync(){
+  if (solo || !peer || peer.destroyed || !peer.open || !view || !view.peers || !V.started) { applyGates(); return; }
+  const want = new Set();
+  for (const [pid, pidPeer] of Object.entries(view.peers)) {
+    if (pid === me.pid) continue; want.add(pid);
+    if (!V.calls.has(pid) && peer.id < pidPeer) callPeer(pid, pidPeer);
+  }
+  for (const pid of [...V.calls.keys()]) if (!want.has(pid)) closeCall(pid);
+  applyGates();
+}
+setInterval(() => { if (!$('#game').hidden) voiceSync(); }, 5000);
+function callPeer(pid, pidPeer){
+  const t = baseTrack(); if (!t) return;
+  const nt = t.clone(); nt.enabled = false;
+  const call = peer.call(pidPeer, new MediaStream([nt]), { metadata: { pid: me.pid } });
+  if (!call) { nt.stop(); return; }
+  setupCall(pid, call, nt);
+}
+function voiceIncoming(call){
+  const pid = String((call.metadata && call.metadata.pid) || '');
+  if (solo || !code || !pid || (call.peer !== peerIdOf(code, pid) && call.peer !== hostIdOf(code))) { try { call.close(); } catch(_){} return; }
+  const t = baseTrack(), nt = t ? t.clone() : null; if (nt) nt.enabled = false;
+  if (V.calls.has(pid)) closeCall(pid);
+  call.answer(nt ? new MediaStream([nt]) : undefined);
+  setupCall(pid, call, nt);
+}
+function setupCall(pid, call, track){
+  const c = { call, track, audio:null, an:null, src:null };
+  V.calls.set(pid, c);
+  call.on('stream', rs => {
+    if (V.calls.get(pid) !== c) return;
+    if (!c.audio) { const el = document.createElement('audio'); el.autoplay = true; el.playsInline = true; el.hidden = true; document.body.appendChild(el); c.audio = el; }
+    c.audio.srcObject = rs; setSink(c.audio);
+    c.audio.play().catch(() => { V.needGesture = true; renderVoiceUI(); });
+    const ac = audio(); if (ac) { try { c.src = ac.createMediaStreamSource(rs); c.an = ac.createAnalyser(); c.an.fftSize = 512; c.src.connect(c.an); } catch(_){} }
+    applyGates();
+  });
+  call.on('close', () => { if (V.calls.get(pid) === c) closeCall(pid); });
+  call.on('error', () => { if (V.calls.get(pid) === c) closeCall(pid); });
+  applyGates();
+}
+function closeCall(pid){
+  const c = V.calls.get(pid); if (!c) return; V.calls.delete(pid);
+  try { c.call.close(); } catch(_){}
+  if (c.track) c.track.stop();
+  if (c.audio) { c.audio.srcObject = null; c.audio.remove(); }
+  if (c.src) { try { c.src.disconnect(); } catch(_){} }
+}
+function voiceStopAll(){
+  for (const pid of [...V.calls.keys()]) closeCall(pid);
+  stopLoop();
+  if (V.localSrc) { try { V.localSrc.disconnect(); } catch(_){} }
+  V.localSrc = null; V.localAn = null;
+  if (V.stream) { V.stream.getTracks().forEach(t => t.stop()); V.stream = null; }
+  V.started = false; V.micOk = false; V.ptt = false; V.needGesture = false;
+}
+/* Mute everyone a moment before a phase change that could lead into night, so nothing slips through while the new view is on its way. */
+function preMute(){
+  const S = view; if (!S || (S.ph !== 'vote' && S.ph !== 'hunter')) return false;
+  const now = Date.now() + clockOff;
+  if (S.end && now >= S.end - 600) return true;
+  const acts = S.acts || {};
+  if (S.ph === 'vote') { const voters = S.P.filter(p => S.A[p.i] && !silenced(S, p.i)).length; if (Object.keys(acts).length >= voters) return true; }
+  if (S.ph === 'hunter' && S.hs && acts[S.hs]) return true;
+  return false;
+}
+function applyGates(){
+  const vs = (view && view.vs) || [], vh = (view && view.vh) || [], hold = preMute(), tx = transmitting() && !hold;
+  for (const [pid, c] of V.calls) {
+    if (c.track) c.track.enabled = tx && vs.includes(pid);
+    if (c.audio) { c.audio.muted = hold || !(vh.includes(pid) && !V.deaf); c.audio.volume = Math.max(0, Math.min(1, (cfg.pvol[pid] ?? 100) / 100)); }
+  }
+}
+function setSink(el){ if (el && el.setSinkId && cfg.out) el.setSinkId(cfg.out).catch(()=>{}); }
+function applyOut(){
+  for (const c of V.calls.values()) setSink(c.audio);
+  setSink(V.loopEl);
+  if (actx && actx.setSinkId) actx.setSinkId(cfg.out || '').catch(()=>{});
+}
+function resumeAudio(){
+  audio();
+  for (const c of V.calls.values()) if (c.audio) c.audio.play().catch(()=>{});
+  V.needGesture = false; renderVoiceUI();
+}
+function level(an){ if (!an) return 0; const b = new Uint8Array(an.fftSize); an.getByteTimeDomainData(b); let s = 0; for (const v of b) { const x = (v - 128) / 128; s += x*x; } return Math.sqrt(s / b.length); }
+function chanOf(S, pid){
+  if (!S || S.ph === 'lobby' || S.ph === 'end') return 'v';
+  if (!S.P.some(p => p.i === pid) || !S.A[pid]) return 'g';
+  return S.ph === 'night' ? 'w' : 'v';
+}
+setInterval(() => {
+  applyGates();
+  const lvl = level(V.localAn); V.myLvl = lvl;
+  const ml = $('#micLvl'); if (ml) ml.style.transform = `scaleX(${Math.min(1, lvl * 6).toFixed(2)})`;
+  const tl = $('#testLvl'); if (tl) tl.style.transform = `scaleX(${Math.min(1, lvl * 6).toFixed(2)})`;
+  if ($('#game').hidden) return;
+  const S = view, vh = (S && S.vh) || [], vs = (S && S.vs) || [], speaking = {};
+  for (const [pid, c] of V.calls) if (c.an && vh.includes(pid) && !V.deaf && (cfg.pvol[pid] ?? 100) > 0 && level(c.an) > 0.03) speaking[pid] = 1;
+  if (transmitting() && !preMute() && lvl > 0.03 && (vs.length || (S && (S.ph === 'lobby' || S.ph === 'end')))) speaking[me.pid] = 1;
+  const now = Date.now(), recent = {};
+  for (const m of msgs.values()) if (now - m.at < 6000 && canSee(ctx(), m.ch) && !cfg.mute[m.pid]) recent[m.pid] = m;
+  document.querySelectorAll('.seat[data-pid]').forEach(el => {
+    const pid = el.dataset.pid, on = !!speaking[pid], ch = chanOf(S, pid);
+    el.classList.toggle('tk', on);
+    ['v','w','g'].forEach(x => el.classList.toggle('tk-'+x, on && ch === x));
+    const m = recent[pid], say = el.querySelector('.say');
+    const t = m ? (m.ch==='w' ? '[ฝูง] ' : m.ch==='g' ? '[วิญญาณ] ' : '') + m.txt : '';
+    if (say && say.textContent !== t) say.textContent = t;
+  });
+}, 100);
+
+const MIC_ON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
+const MIC_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 10V6a3 3 0 00-5.7-1.3M9 9v2a3 3 0 004.6 2.5M5 11a7 7 0 0011.3 5.5M19 11a7 7 0 01-.5 2.6M12 18v3M3 3l18 18"/></svg>';
+function voiceHint(){
+  const S = view, c = ctx();
+  if (solo) return 'โหมดฝึกไม่มีเสียงพูด';
+  if (V.needGesture) return 'แตะปุ่ม "เปิดเสียงเพื่อน" เพื่อเริ่มได้ยิน';
+  if (!V.micOk) return 'ยังไม่ได้เปิดไมค์ · กดปุ่มไมค์เพื่ออนุญาต';
+  if (!S || !c) return '';
+  const vs = S.vs || [];
+  if (S.ph === 'lobby' || S.ph === 'end') return 'ทุกคนในห้องได้ยินคุณ';
+  if (c.ghost) return 'เฉพาะวิญญาณได้ยินคุณ · คุณได้ยินทุกคน';
+  if (S.ph === 'night') return c.pack ? 'เฉพาะฝูงหมาป่าได้ยินคุณ' : 'กลางคืน: ไม่มีใครได้ยินคุณ และคุณไม่ได้ยินใคร';
+  if (silenced(S, me.pid)) return 'วันนี้คุณถูกห้ามพูด ไม่มีใครได้ยินคุณ';
+  return vs.length ? 'ทุกคนได้ยินคุณ' : 'ยังไม่มีใครในสาย';
+}
+function renderVoiceUI(){
+  const mb = $('#micBtn'); if (!mb) return;
+  const tx = transmitting();
+  mb.classList.toggle('on', tx); mb.classList.toggle('off', !tx);
+  const label = solo ? 'ไม่มีเสียงในโหมดฝึก' : !V.micOk ? 'อนุญาตไมค์' : cfg.mode === 'ptt' ? (V.ptt ? 'กำลังพูด…' : 'กดค้างเพื่อพูด') : (V.muted ? 'ไมค์ปิดอยู่' : 'ไมค์เปิดอยู่');
+  mb.innerHTML = `${tx ? MIC_ON : MIC_OFF}<span>${label} <span class="kbd small">${esc(keyName(cfg.key))}</span></span><span class="lvl"><i id="micLvl"></i></span>`;
+  mb.disabled = solo;
+  const db = $('#deafBtn'); db.hidden = solo; db.classList.toggle('off', V.deaf); db.textContent = V.needGesture ? 'เปิดเสียงเพื่อน' : (V.deaf ? 'เสียงเพื่อนปิดอยู่' : 'ปิดเสียงเพื่อน');
+  $('#voiceHint').textContent = voiceHint();
+}
+(() => {
+  const mb = $('#micBtn');
+  mb.addEventListener('pointerdown', e => {
+    e.preventDefault(); audio();
+    if (!V.micOk) { micOpen(); return; }
+    if (cfg.mode === 'ptt') { try { mb.setPointerCapture(e.pointerId); } catch(_){} V.ptt = true; }
+    else V.muted = !V.muted;
+    applyGates(); renderVoiceUI();
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev => mb.addEventListener(ev, () => { if (cfg.mode === 'ptt' && V.ptt) { V.ptt = false; applyGates(); renderVoiceUI(); } }));
+  mb.addEventListener('contextmenu', e => e.preventDefault());
+  $('#deafBtn').onclick = () => { if (V.needGesture) { resumeAudio(); return; } V.deaf = !V.deaf; applyGates(); renderVoiceUI(); };
+  const typing = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+  document.addEventListener('keydown', e => {
+    if (binding || e.code !== cfg.key || e.repeat || typing(e.target) || $('#game').hidden || !$('#setModal').hidden || !V.micOk) return;
+    e.preventDefault();
+    if (cfg.mode === 'ptt') V.ptt = true; else V.muted = !V.muted;
+    applyGates(); renderVoiceUI();
+  });
+  document.addEventListener('keyup', e => { if (e.code === cfg.key && cfg.mode === 'ptt' && V.ptt) { V.ptt = false; applyGates(); renderVoiceUI(); } });
+  const drop = () => { if (V.ptt) { V.ptt = false; applyGates(); renderVoiceUI(); } };
+  window.addEventListener('blur', drop);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) drop(); });
+})();
+
+/* ================= settings + sound ================= */
+let cfg = { mode:'open', key:'KeyM', vol:70, sfx:true, mute:{}, pvol:{}, mic:'', out:'', turn:{ url:'', user:'', pass:'' } };
+try { const c = JSON.parse(store('l','ww.cfg') || 'null'); if (c && typeof c === 'object') cfg = Object.assign(cfg, c, { mute: Object.assign({}, c.mute || {}), pvol: Object.assign({}, c.pvol || {}), turn: Object.assign({ url:'', user:'', pass:'' }, c.turn || {}) }); } catch(e){}
+if (!['open','ptt'].includes(cfg.mode)) cfg.mode = 'open';
+let binding = false;
+function saveCfg(){ store('l','ww.cfg', JSON.stringify(cfg)); chatSig = ''; renderChat(); applyGates(); applyVol(); renderVoiceUI(); }
+function keyName(code){
+  const map = { Space:'Space', ShiftLeft:'Shift ซ้าย', ShiftRight:'Shift ขวา', ControlLeft:'Ctrl ซ้าย', ControlRight:'Ctrl ขวา', AltLeft:'Alt ซ้าย', AltRight:'Alt ขวา', CapsLock:'Caps Lock', Backquote:'`', Tab:'Tab', Enter:'Enter' };
+  return map[code] || String(code).replace(/^Key/,'').replace(/^Digit/,'').replace(/^Numpad/,'Num ');
+}
+async function listDevices(){
+  const ms = $('#micSel'), os = $('#outSel'), hint = $('#devHint');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) { hint.textContent = 'เบราว์เซอร์นี้ไม่รองรับการเลือกอุปกรณ์'; return; }
+  let devs = []; try { devs = await navigator.mediaDevices.enumerateDevices(); } catch(e){}
+  const ins = devs.filter(d => d.kind === 'audioinput'), outs = devs.filter(d => d.kind === 'audiooutput');
+  const labeled = ins.some(d => d.label);
+  ms.innerHTML = '<option value="">ค่าเริ่มต้นของเครื่อง</option>' + ins.filter(d => d.deviceId && d.deviceId !== 'default').map((d,i) => `<option value="${esc(d.deviceId)}">${esc(d.label || 'ไมโครโฟน ' + (i+1))}</option>`).join('');
+  ms.value = cfg.mic && ins.some(d => d.deviceId === cfg.mic) ? cfg.mic : '';
+  const sinkOk = 'setSinkId' in HTMLMediaElement.prototype;
+  os.innerHTML = '<option value="">ค่าเริ่มต้นของเครื่อง</option>' + outs.filter(d => d.deviceId && d.deviceId !== 'default').map((d,i) => `<option value="${esc(d.deviceId)}">${esc(d.label || 'ลำโพง ' + (i+1))}</option>`).join('');
+  os.value = cfg.out && outs.some(d => d.deviceId === cfg.out) ? cfg.out : '';
+  os.disabled = !sinkOk;
+  hint.innerHTML = !labeled ? 'ยังไม่ได้อนุญาตไมค์ จึงยังไม่เห็นชื่ออุปกรณ์ <button type="button" class="btn-sm" id="permBtn">อนุญาตไมค์</button>'
+    : !sinkOk ? 'เบราว์เซอร์นี้เลือกหูฟังในเว็บไม่ได้ (เช่น Safari) จะใช้เสียงออกตามค่าของเครื่อง' : '';
+  const pb = $('#permBtn'); if (pb) pb.onclick = () => micOpen();
+}
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange', () => { if (!$('#setModal').hidden) listDevices(); });
+function stopLoop(){ if (V.loopEl) { V.loopEl.srcObject = null; V.loopEl.remove(); V.loopEl = null; } const lb = $('#loopBtn'); if (lb) { lb.textContent = 'ฟังเสียงตัวเอง'; lb.classList.remove('btn-main'); } }
+function openSettings(){ audio(); renderSettings(); listDevices(); $('#setModal').hidden = false; $('#setClose').focus(); if (!V.stream) micOpen().then(() => { renderSettings(); listDevices(); }); }
+function closeSettings(){ binding = false; stopLoop(); $('#setModal').hidden = true; if (!peer && !solo && V.stream) { V.stream.getTracks().forEach(t => t.stop()); V.stream = null; V.micOk = false; if (V.localSrc) { try { V.localSrc.disconnect(); } catch(_){} } V.localSrc = null; V.localAn = null; } }
+$('#setOpen').onclick = openSettings; $('#setOpenHome').onclick = openSettings; $('#setClose').onclick = closeSettings;
+$('#setModal').addEventListener('click', e => { if (e.target.id === 'setModal') closeSettings(); });
+$('#micSel').onchange = () => { cfg.mic = $('#micSel').value; saveCfg(); micOpen(); };
+$('#outSel').onchange = () => { cfg.out = $('#outSel').value; saveCfg(); applyOut(); };
+$('#outTest').onclick = () => { audio(); applyOut(); const was = cfg.sfx; cfg.sfx = true; applyVol(); sfx('day'); setTimeout(() => sfx('night'), 900); cfg.sfx = was; setTimeout(applyVol, 2500); };
+$('#loopBtn').onclick = () => {
+  if (V.loopEl) { stopLoop(); return; }
+  if (!V.stream) { micOpen(); return; }
+  const el = document.createElement('audio'); el.autoplay = true; el.hidden = true; el.srcObject = V.stream; document.body.appendChild(el); V.loopEl = el; setSink(el); el.play().catch(()=>{});
+  $('#loopBtn').textContent = 'หยุดฟังเสียงตัวเอง'; $('#loopBtn').classList.add('btn-main');
+};
+['turnUrl','turnUser','turnPass'].forEach(id => $('#'+id).addEventListener('change', () => { cfg.turn = { url: $('#turnUrl').value.trim(), user: $('#turnUser').value.trim(), pass: $('#turnPass').value }; saveCfg(); toast('บันทึกแล้ว มีผลตอนเข้าห้องครั้งถัดไป'); }));
+function renderSettings(){
+  $('#modeSeg').querySelectorAll('[data-m]').forEach(b => { b.classList.toggle('on', b.dataset.m === cfg.mode); b.onclick = () => { V.ptt = false; cfg.mode = b.dataset.m; saveCfg(); renderSettings(); }; });
+  $('#keyLabel').textContent = cfg.mode === 'ptt' ? 'ปุ่มกดค้างเพื่อพูด' : 'ปุ่มเปิด-ปิดไมค์';
+  $('#keyShow').textContent = keyName(cfg.key);
+  const kb = $('#keyBind'); kb.classList.toggle('listen', binding); kb.textContent = binding ? 'กดปุ่มที่ต้องการ… (Esc ยกเลิก)' : 'เปลี่ยนปุ่ม';
+  kb.onclick = () => { binding = !binding; renderSettings(); };
+  $('#sfxOn').checked = !!cfg.sfx; $('#sfxOn').onchange = () => { cfg.sfx = $('#sfxOn').checked; saveCfg(); };
+  $('#volIn').value = cfg.vol; $('#volOut').textContent = cfg.vol;
+  $('#volIn').oninput = () => { cfg.vol = Number($('#volIn').value); $('#volOut').textContent = cfg.vol; saveCfg(); };
+  $('#sfxTest').onclick = () => { audio(); sfx('night'); };
+  $('#turnUrl').value = cfg.turn.url; $('#turnUser').value = cfg.turn.user; $('#turnPass').value = cfg.turn.pass;
+  const S = curS, list = S ? S.P.filter(p => p.i !== me.pid && !p.b) : [];
+  $('#setPlayers').innerHTML = list.length ? list.map(p => { const v = cfg.pvol[p.i] ?? 100; return `<div class="pl-row"><div class="who"><span class="mini-av" style="background:hsl(${hue(p.i)} 55% 72%)">${esc([...p.n][0]||'?')}</span><span>${esc(p.n)}</span></div>
+      <div class="pl-ctl"><input type="range" min="0" max="100" step="5" value="${v}" data-pv="${esc(p.i)}" aria-label="ระดับเสียงของ ${esc(p.n)}"><output>${v}</output>
+      <button type="button" class="btn-sm${cfg.mute[p.i]?' off':''}" data-mu="${esc(p.i)}" aria-pressed="${cfg.mute[p.i]?'true':'false'}">${cfg.mute[p.i]?'ซ่อนแชทอยู่':'ซ่อนแชท'}</button></div></div>`; }).join('')
+    : '<div class="hint">เข้าห้องกับเพื่อนก่อน รายชื่อผู้เล่นจะขึ้นตรงนี้</div>';
+  $('#setPlayers').querySelectorAll('[data-pv]').forEach(r => r.oninput = () => { cfg.pvol[r.dataset.pv] = Number(r.value); r.nextElementSibling.textContent = r.value; saveCfg(); });
+  $('#setPlayers').querySelectorAll('[data-mu]').forEach(b => b.onclick = () => { const id = b.dataset.mu; if (cfg.mute[id]) delete cfg.mute[id]; else cfg.mute[id] = 1; saveCfg(); renderSettings(); });
+}
+document.addEventListener('keydown', e => {
+  if (!$('#setModal').hidden && e.key === 'Escape' && !binding) { closeSettings(); return; }
+  if (!binding) return;
+  e.preventDefault(); e.stopPropagation();
+  if (e.key !== 'Escape') { V.ptt = false; cfg.key = e.code; saveCfg(); }
+  binding = false; renderSettings();
+}, true);
+
+let actx = null, master = null;
+function audio(){
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.connect(actx.destination); } catch(e){ actx = null; return null; } }
+  applyVol(); if (actx.state === 'suspended') actx.resume().catch(()=>{});
+  if (cfg.out && actx.setSinkId && !actx._sink) { actx._sink = 1; actx.setSinkId(cfg.out).catch(()=>{}); }
+  return actx;
+}
+function applyVol(){ if (master) master.gain.value = cfg.sfx ? (cfg.vol/100) * 0.7 : 0; }
+document.addEventListener('pointerdown', () => audio(), { capture:true });
+function tone(f0, f1, dur, type, vol, delay=0){
+  const a = actx; if (!a || !master) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + delay;
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1,f1), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+let nbuf = null;
+function noise(dur, freq, q, vol, delay=0, type='bandpass'){
+  const a = actx; if (!a || !master) return;
+  if (!nbuf) { nbuf = a.createBuffer(1, a.sampleRate * 3, a.sampleRate); const d = nbuf.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1; }
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + delay;
+  src.buffer = nbuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.05, dur/3)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(g).connect(master); src.start(t, Math.random()*1.5); src.stop(t + dur + 0.05);
+}
+const SFX = {
+  burn(){ noise(2.6, 500, .5, .35, 0, 'lowpass'); noise(2.6, 1400, .7, .2); for (let i=0;i<28;i++) noise(.03, 2500 + Math.random()*3500, 2, .35, Math.random()*2.5); },
+  claw(){ [0,.12,.24].forEach(d => noise(.16, 3200, .9, .55, .5 + d)); tone(140, 60, .3, 'sawtooth', .12, .55); },
+  shot(){ noise(.3, 900, .3, .9); tone(110, 35, .45, 'sine', .8); },
+  flip(){ noise(.14, 4500, 1.2, .25); },
+  night(){ tone(330, 620, .9, 'sine', .22); tone(620, 470, 1.4, 'sine', .22, .85); tone(335, 630, .9, 'sine', .08); },
+  day(){ tone(880, 880, .7, 'triangle', .16); tone(1320, 1320, .9, 'triangle', .12, .18); },
+  vote(){ tone(95, 45, .5, 'sine', .7); tone(95, 45, .5, 'sine', .7, .38); },
+  save(){ [660, 990, 1320].forEach((f,i) => tone(f, f, .9, 'triangle', .12, i*.1)); },
+  none(){ tone(660, 660, .6, 'sine', .14); },
+  end(){ [523, 659, 784, 1046].forEach((f,i) => tone(f, f, 1.8, 'triangle', .14, i*.13)); },
+  msg(){ tone(880, 1180, .1, 'sine', .12); }
+};
+function sfx(n){ if (!cfg.sfx || !cfg.vol || !actx) return; try { SFX[n] && SFX[n](); } catch(e){} }
+
+/* ================= event overlay ================= */
+let lastG = null, seenFx, fxQ = [], fxBusy = false, lastPhKey = null, fxTok = 0;
+const ICO_SCALE = '<svg class="fx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v18M5 21h14M4 7h16"/><path d="M6.5 7L3.5 14a3 3 0 006 0zM17.5 7l-3 7a3 3 0 006 0z"/></svg>';
+const ICO_SUN = '<svg class="fx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color:var(--lantern)"><path d="M3 18h18M7 18a5 5 0 0110 0"/><path d="M12 7V4M5.6 10.6L3.5 8.5M18.4 10.6l2.1-2.1"/></svg>';
+const sleep = (ms, tok) => new Promise(r => setTimeout(r, tok !== fxTok ? 0 : ms));
+function resetFx(){ fxTok++; fxQ = []; fxBusy = false; seenFx = undefined; lastPhKey = null; lastG = null; $('#fx').hidden = true; $('#fx').innerHTML = ''; $('#fxSkip').hidden = true; }
+$('#fxSkip').onclick = () => { fxTok++; fxQ = []; fxBusy = false; $('#fx').hidden = true; $('#fx').innerHTML = ''; $('#fxSkip').hidden = true; };
+function checkFx(S){
+  if (!S || $('#game').hidden) return;
+  if (S.g !== lastG) { if (lastG !== null && S.g) { msgs.clear(); chatSig = ''; renderChat(); } lastG = S.g; }
+  const id = S.fx ? S.fx.id : 0;
+  const pk = S.ph + ':' + S.r + ':' + (S.vn || '');
+  if (seenFx === undefined) { seenFx = id; lastPhKey = pk; return; }
+  if (id !== seenFx) { seenFx = id; if (S.fx && Array.isArray(S.fx.it)) fxQ.push(...S.fx.it); }
+  if (pk !== lastPhKey) { lastPhKey = pk; if (['night','day','vote'].includes(S.ph)) fxQ.push({ t:'title', ph:S.ph, r:S.r, vn:S.vn }); }
+  if (!fxBusy && fxQ.length) playFx();
+}
+async function playFx(){
+  fxBusy = true; const tok = fxTok, ov = $('#fx');
+  ov.hidden = false; $('#fxSkip').hidden = false;
+  while (fxQ.length && tok === fxTok) { const it = fxQ.shift(); try { await runFx(it, ov, tok); } catch(e) {} }
+  if (tok === fxTok) { ov.hidden = true; ov.innerHTML = ''; $('#fxSkip').hidden = true; fxBusy = false; }
+}
+function ncard(S, id, cls='', extra=''){ const n = nameOf(S, id); return `<div class="ncard ${cls}"><div class="av" style="background:hsl(${hue(id)} 55% 72%)">${esc([...n][0] || '?')}</div><div class="nn">${esc(n)}</div>${extra}</div>`; }
+function card3d(S, id){
+  const r = S.R[id], RO = ROLES[r] || ROLES.villager, t = RO.team;
+  return `<div class="c3d"><div class="in"><div class="face back"><span>คืนหมาป่า</span></div><div class="face front tc-${t}"><div class="big">${TICON[t]}</div><h3>${RO.th}</h3><div class="who">${esc(nameOf(S, id))}</div><span class="tm">${TEAM[t].th}</span></div></div></div>`;
+}
+function stage(eyebrow, h, p, body=''){ return `<div class="fx-stage"><div class="fx-eyebrow">${eyebrow}</div><h2>${h}</h2>${body}${p ? `<p>${p}</p>` : ''}</div>`; }
+async function reveal(ov, S, ids, tok){
+  if (tok !== fxTok || !ids.length) return;
+  ov.innerHTML = stage('เปิดเผยบทบาท', ids.length > 1 ? 'ตัวตนที่แท้จริง' : esc(nameOf(S, ids[0])) + ' คือ…', '', `<div class="fx-cards">${ids.map(id => card3d(S, id)).join('')}</div>`);
+  await sleep(1000, tok);
+  ov.querySelectorAll('.c3d .in').forEach((c, i) => setTimeout(() => { if (tok === fxTok) { c.classList.add('flip'); sfx('flip'); } }, i * 180));
+  await sleep(2900, tok);
+}
+function embers(wrap, dur){
+  const n = 30;
+  for (let i = 0; i < n; i++) setTimeout(() => {
+    if (!wrap.isConnected) return;
+    const e = document.createElement('span'); e.className = 'ember';
+    e.style.left = (Math.random()*100) + '%'; e.style.bottom = Math.min(100, (i/n)*105) + '%';
+    e.style.setProperty('--x', (Math.random()*60 - 30) + 'px'); e.style.setProperty('--d', (1 + Math.random()*1.2) + 's');
+    wrap.appendChild(e); setTimeout(() => e.remove(), 2400);
+  }, 300 + (i/n) * dur);
+}
+async function runFx(it, ov, tok){
+  const S = curS; if (!S) return;
+  const N = id => esc(nameOf(S, id));
+  const d = Array.isArray(it.d) ? it.d : [];
+  if (it.t === 'title') {
+    sfx(it.ph);
+    const T = { night:['คืนที่ ' + it.r, 'หมู่บ้านหลับใหล ใครมีพลังให้ลงมือ'], day:['เช้าวันที่ ' + it.r, 'ถกเถียงกันว่าใครคือตัวร้าย'], vote:[it.vn===2 ? 'โหวตประหารรอบที่ 2' : 'ถึงเวลาโหวตประหาร', 'เลือกคนที่คุณสงสัยที่สุด'] }[it.ph];
+    if (!T) return;
+    ov.innerHTML = `<div class="fx-stage fx-title-only ph-${it.ph}"><h2>${T[0]}</h2><p>${T[1]}</p></div>`;
+    await sleep(1500, tok);
+  } else if (it.t === 'vote') {
+    if (!it.o) { ov.innerHTML = stage('ผลโหวต', 'ไม่มีใครถูกประหาร', 'คะแนนเสมอ หรือคนงดออกเสียงมากกว่า', ICO_SCALE); sfx('none'); await sleep(2300, tok); }
+    else if (it.n) {
+      ov.innerHTML = stage('ผลโหวต', N(it.o) + ' รอดจากการประหาร', it.n === 'p' ? 'เปิดตัวเป็นเจ้าชาย ทุกคนต้องยอมถอย' : 'พรของบาทหลวงคุ้มครองไว้ได้ทันเวลา', `<div style="position:relative">${ncard(S, it.o, '', '<div class="shield"></div>')}</div>`); sfx('save');
+      await sleep(2900, tok);
+    } else {
+      ov.innerHTML = stage('การประหาร', N(it.o) + ' ถูกประหาร', '', `<div class="burnwrap" id="bw">${ncard(S, it.o)}<div class="flames">${'<i></i>'.repeat(7)}</div></div>`);
+      await sleep(500, tok);
+      const bw = $('#bw'); if (bw) { bw.classList.add('go'); embers(bw, 2300); sfx('burn'); }
+      await sleep(2800, tok);
+      await reveal(ov, S, d.length ? d : [it.o], tok);
+    }
+  } else if (it.t === 'night') {
+    if (!d.length) { ov.innerHTML = stage('รุ่งเช้า', 'คืนนี้ไม่มีใครตาย', 'ทุกคนรอดมาได้อีกคืน', ICO_SUN); sfx('none'); await sleep(2300, tok); }
+    else {
+      ov.innerHTML = stage('รุ่งเช้า', d.length > 1 ? `พบศพ ${d.length} ราย` : 'พบศพของ ' + N(d[0]), '', `<div class="fx-cards">${d.map(id => ncard(S, id, 'hit', '<div class="claw"><i></i><i></i><i></i></div>')).join('')}</div>`);
+      sfx('claw');
+      await sleep(1900, tok);
+      await reveal(ov, S, d, tok);
+    }
+  } else if (it.t === 'shot') {
+    if (!d.length) { ov.innerHTML = stage('นายพราน', N(it.h) + ' ลดปืนลง', 'ไม่ยิงใครก่อนสิ้นใจ'); await sleep(1900, tok); }
+    else {
+      ov.innerHTML = stage('เสียงปืนดังขึ้น', `นายพราน ${N(it.h)} ยิง ${N(d[0])}`, '', `<div class="fx-cards">${d.map((id,i) => `<div style="position:relative">${ncard(S, id, '', i===0 ? '<div class="xhair"></div>' : '')}</div>`).join('')}</div>`);
+      await sleep(1100, tok);
+      if (tok === fxTok) { const f = document.createElement('div'); f.className = 'flash'; ov.appendChild(f); ov.querySelectorAll('.ncard').forEach(n => n.classList.add('hit')); sfx('shot'); }
+      await sleep(900, tok);
+      await reveal(ov, S, d, tok);
+    }
+  } else if (it.t === 'end') {
+    const W = { v:['ชาวบ้านชนะ','กำจัดตัวร้ายได้หมดแล้ว','v'], w:['หมาป่าชนะ','ฝูงหมาป่ายึดหมู่บ้านได้','w'], s:['ฆาตกรชนะ','รอดเป็นคนสุดท้าย','s'], t:['คนบ้าคนผีทะเลชนะ','ถูกประหารได้สมใจ','s'],
+      l:['คู่รักชนะ','รอดด้วยกันเป็น 2 คนสุดท้าย','s'], c:['ลัทธิชนะ','ทั้งหมู่บ้านเข้าลัทธิแล้ว','s'], lone:['หมาป่าเดียวดายชนะ','ครองหมู่บ้านไว้คนเดียว','w'] }[it.w] || ['จบเกม','','v'];
+    const chips = (S.wp || []).map(id => roleTagFx(S, id)).join('');
+    ov.innerHTML = `<div class="fx-stage"><div class="fx-eyebrow">จบเกม</div><h2 class="endtitle ${W[2]}">${W[0]}</h2><p>${W[1]}</p><div class="winners">${chips}</div></div>`;
+    sfx('end');
+    await sleep(4500, tok);
+  }
+}
+function roleTagFx(S, id){ const r = S.R[id]; return `<span class="tag ${ROLES[r] ? TEAM[ROLES[r].team].cls : ''}" style="font-size:14px;padding:4px 12px">${esc(nameOf(S,id))} · ${roleTh(r)}</span>`; }
+
+initApp();
+})();
+</script>
+</body>
+</html>
