@@ -279,6 +279,14 @@ select:disabled{opacity:.5}
 .endtitle.v{color:var(--leaf)} .endtitle.w{color:var(--blood)} .endtitle.s{color:var(--mist)}
 .winners{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .fx-icon{width:72px;height:72px;color:var(--dim)}
+/* Lite mode */
+body.lite,body.lite .topbar{transition:none}
+body.lite .seat.victim,body.lite .rv-card .face.back,body.lite .seat.tk .av::after,body.lite .wave i,body.lite .rv-hint,body.lite .shield,body.lite .flames i{animation:none}
+body.lite .rv-rays,body.lite .rv-glow,body.lite .flames{display:none}
+body.lite .face,body.lite .ncard,body.lite .setbtn{box-shadow:none}
+body.lite .seat.tk .av::after{box-shadow:none}
+body.lite .fx{background:rgba(4,5,12,.94)}
+.tag.typing{animation:rvblink 1s ease-in-out infinite}
 /* Own-role reveal */
 .reveal-stage{gap:16px}
 .rv-wrap{position:relative;width:230px;height:330px;display:grid;place-items:center}
@@ -444,6 +452,17 @@ select:disabled{opacity:.5}
       <div id="setPlayers"></div>
     </section>
     <section>
+      <h3>ความลื่น</h3>
+      <label class="chk"><input type="checkbox" id="liteOn"> โหมดลื่น: ลดแสง เงา และแอนิเมชันที่เล่นวนตลอด เหมาะกับมือถือหรือเครื่องที่กระตุก</label>
+    </section>
+    <section>
+      <h3>AI บอท (ตั้งที่เครื่องโฮสต์)</h3>
+      <div class="hint">บอทคุย กล่าวหา แก้ตัว และหมาป่าบอทหลอกอ้างบทบาทได้อยู่แล้วโดยไม่ต้องตั้งค่า ถ้าอยากให้บอทคุยเป็นธรรมชาติและตอบโต้ได้ฉลาดขึ้น ใส่ Claude API key ของคุณเองได้ คิดค่าใช้จ่ายตามการใช้จริงในบัญชี Anthropic Console ของคุณ key เก็บในเครื่องนี้เท่านั้นและส่งตรงไปที่ Anthropic ไม่ส่งให้เพื่อน</div>
+      <label class="chk"><input type="checkbox" id="aiOn"> ให้บอทคุยด้วย Claude</label>
+      <input type="password" id="aiKey" placeholder="API key (sk-ant-…)" autocomplete="off">
+      <select id="aiModel" aria-label="รุ่นของ Claude"><option value="claude-haiku-5-5">Claude Haiku 5.5 · เร็ว ประหยัด</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 · ฉลาดกว่า</option></select>
+    </section>
+    <section>
       <details><summary class="label" style="cursor:pointer">ขั้นสูง: เซิร์ฟเวอร์ TURN</summary>
         <div class="hint" style="margin:8px 0">ถ้าเพื่อนบางคนไม่ได้ยินเสียงเพราะเน็ตบางเครือข่ายบล็อกการเชื่อมต่อตรง ใส่ TURN server ที่นี่ (ทุกคนในห้องควรใส่เหมือนกัน)</div>
         <div class="settings"><input type="text" id="turnUrl" placeholder="turn:example.com:3478"><input type="text" id="turnUser" placeholder="ชื่อผู้ใช้"><input type="text" id="turnPass" placeholder="รหัสผ่าน"></div>
@@ -465,6 +484,45 @@ const TICON = {
   v:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>',
   s:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l2.8 6 6.5.7-4.9 4.4 1.4 6.4L12 16.7 6.2 20l1.4-6.4-4.9-4.4 6.5-.7z"/></svg>'
 };
+/* role icons (24px line art) */
+const RI = {
+  villager:'<path d="M3 11l9-7 9 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/>',
+  seer:'<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3.2"/>',
+  appr:'<path d="M3 13s3.2-5.5 9-5.5 9 5.5 9 5.5-3.2 5.5-9 5.5S3 13 3 13z"/><circle cx="12" cy="13" r="2.4"/><path d="M12 2v3M8 3.5l1 2.2M16 3.5l-1 2.2"/>',
+  aura:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5" stroke-dasharray="2 2.5"/><circle cx="12" cy="12" r="10" stroke-dasharray="1.5 3"/>',
+  pi:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><path d="M8 10.5h5M10.5 8v5"/>',
+  beholder:'<circle cx="7" cy="14" r="4"/><circle cx="17" cy="14" r="4"/><path d="M11 14h2M5 10l2-5h3l1 3M19 10l-2-5h-3l-1 3"/>',
+  mason:'<path d="M3 7h18v4H3zM3 11h18v4H3zM3 15h18v4H3z"/><path d="M9 7v4M15 11v4M9 15v4"/>',
+  bodyguard:'<path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
+  priest:'<path d="M12 3v18M7 8h10"/><path d="M8 21h8"/>',
+  witch:'<path d="M12 2l4 10H8z"/><path d="M4 14h16"/><path d="M8 14c0 3 1.8 6 4 6s4-3 4-6"/>',
+  hunter:'<path d="M5 19C5 10 10 5 19 5"/><path d="M5 19L19 5"/><path d="M15 5h4v4"/><path d="M5 19l3-1M5 19l1-3"/>',
+  huntress:'<path d="M4 20L20 4"/><path d="M14 4h6v6"/><path d="M4 20l2.5-4.5L9 18zM6 17l-2-2M8 19l-2-2"/>',
+  revealer:'<path d="M9 2h6v3H9z"/><path d="M8 5h8l1 5-5 12-5-12z"/><path d="M12 10v4"/>',
+  cupid:'<path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.5C19 15.6 12 20 12 20z"/><path d="M3 21l8-8M17 4h4v4M21 4l-6 6"/>',
+  diseased:'<circle cx="12" cy="12" r="5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M19 5l-3.5 3.5M8.5 15.5L5 19"/>',
+  lycan:'<path d="M20 15A8 8 0 019 4a8 8 0 1011 11z"/><path d="M14 10l1.5-2 1 2.5"/>',
+  oldwoman:'<path d="M9 21V9a3 3 0 016 0"/><path d="M15 9v2"/><circle cx="12" cy="4" r="0.6"/>',
+  spell:'<path d="M4 20L15 9"/><path d="M15 9l2-2"/><path d="M18 3v3M16.5 4.5h3M20 9v2M19 10h2M12 3v2M11 4h2"/>',
+  prince:'<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/><path d="M5 19h14"/>',
+  tough:'<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>',
+  pacifist:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 12l-6.4 6.4M12 12l6.4 6.4"/>',
+  idiot:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.3-1.5 2.5"/><path d="M12 17h.01"/>',
+  tm:'<circle cx="11" cy="14" r="7"/><path d="M15.5 8.5l2-2M17.5 6.5l1-1M19 3l1 1M21 5l-1 1"/>',
+  cursed:'<circle cx="12" cy="12" r="9"/><path d="M12 3l-2 5 4 3-3 4 2 6"/>',
+  doppel:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3" stroke-dasharray="2 1.5"/><path d="M3 20c0-3 2.2-5 5-5s5 2 5 5M11 20c0-3 2.2-5 5-5s5 2 5 5" />',
+  wolf:'<path d="M4 3l4 5h8l4-5v9l-2.5 4.5L12 21l-5.5-4.5L4 12z"/><path d="M9 12.5h.01M15 12.5h.01" stroke-width="2.6"/><path d="M10.5 16.5L12 18l1.5-1.5"/>',
+  cub:'<circle cx="12" cy="16" r="4"/><circle cx="6" cy="10" r="1.8"/><circle cx="10" cy="6.5" r="1.8"/><circle cx="14" cy="6.5" r="1.8"/><circle cx="18" cy="10" r="1.8"/>',
+  minion:'<path d="M12 2l2 11h-4z"/><path d="M7 13h10M12 13v5"/><circle cx="12" cy="20" r="1.6"/>',
+  sorc:'<circle cx="12" cy="10" r="6.5"/><path d="M7 19h10l-1.5-3h-7z"/><path d="M10 8.5a2 2 0 012-1.5"/>',
+  lone:'<path d="M5 6l3 4h6l3-4v7l-2 3.5L11 19l-4-2.5L5 13z"/><path d="M8.5 12h.01M13.5 12h.01" stroke-width="2.4"/><path d="M19 2.5l.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2z"/>',
+  tanner:'<circle cx="12" cy="12" r="9"/><path d="M8 9c.5-.6 1.5-.6 2 0M14 9c.5-.6 1.5-.6 2 0"/><path d="M8 14c1.2 2.2 6.8 2.2 8 0"/><path d="M12 16v2.5"/>',
+  hoodlum:'<rect x="4" y="9" width="16" height="7" rx="3.5"/><path d="M8 9v7M12 9v7M16 9v7M7 16v3h10v-3"/>',
+  sk:'<path d="M14 3l7 7-9 9-3-3 2-2-3-3z"/><path d="M8 16l-5 5"/>',
+  chupa:'<path d="M3 8c3 2 15 2 18 0"/><path d="M7 9l2 7 2-6M13 10l2 6 2-7"/>',
+  cult:'<path d="M9 21V11h6v10"/><path d="M12 11V8"/><path d="M12 8c-1.5-1.5-1.5-3 0-5 1.5 2 1.5 3.5 0 5z"/><path d="M6 21h12"/>'
+};
+const rIcon = r => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RI[r] || RI.villager}</svg>`;
 const R_ = (th, team, desc, x={}) => Object.assign({ th, team, desc, max:1 }, x);
 const ROLES = {
   villager: R_('ชาวบ้านธรรมดา','v','ไม่มีพลังพิเศษ ช่วยกันสังเกตและโหวตประหารตัวร้าย',{max:20}),
@@ -533,9 +591,10 @@ const conns = new Map();           /* host only: pid -> { conn, n, a, y, on } */
 const lastSent = new Map();
 let joinedAt = 0, revealRole = false, lastSig = '', retryTimer = null, leaveArm = 0;
 
+['#gSeats','#gBanner','#gRole','#gPrompt','#gHost','#gLog'].forEach(id => { const el = $(id); Object.defineProperty(el, 'html', { set(v){ if (el._h !== v) { el._h = v; el.innerHTML = v; } } }); });
 /* ================= home ================= */
 $('#rolesList').innerHTML = ['v','w','s'].map((t,i) => `<details class="team" ${i===0?'open':''}><summary><span class="${TEAM[t].t}">${TEAM[t].th}</span></summary><div class="roles-list">` +
-  ORDER.filter(k => ROLES[k].team === t).map(k => `<div class="role-line"><div class="ico ${TEAM[t].t}">${TICON[t]}</div><div><b>${ROLES[k].th}</b><br><span class="muted">${ROLES[k].desc}</span></div></div>`).join('') + '</div></details>').join('');
+  ORDER.filter(k => ROLES[k].team === t).map(k => `<div class="role-line"><div class="ico ${TEAM[t].t}">${rIcon(k)}</div><div><b>${ROLES[k].th}</b><br><span class="muted">${ROLES[k].desc}</span></div></div>`).join('') + '</div></details>').join('');
 
 const nameIn = $('#nameIn'), codeIn = $('#codeIn');
 nameIn.value = me.name;
@@ -610,7 +669,7 @@ function hostRoom(c, saved, tries=0){
   });
 }
 let saveT = 0;
-function saveHost(){ if (solo || !hosting || !myState) return; const now = Date.now(); if (now - saveT < 1500) return; saveT = now; store('l','ww.host', JSON.stringify({ code, pid: me.pid, at: now, st: myState, jo: joinOrder })); }
+function saveHost(){ if (solo || !hosting || !myState) return; const now = Date.now(); if (now - saveT < 4000) return; saveT = now; store('l','ww.host', JSON.stringify({ code, pid: me.pid, at: now, st: myState, jo: joinOrder })); }
 function onHostData(conn, d){
   if (!d || typeof d !== 'object') return;
   if (d.t === 'hello') {
@@ -635,9 +694,13 @@ function peersInfo(){
   return info;
 }
 function onlineList(){ return [me.pid, ...[...conns].filter(([,c]) => c.on).map(([p]) => p)]; }
+let bcKey = '', bcAt = 0;
 function broadcast(){
   if (solo || !hosting || !myState) return;
   const now = Date.now();
+  const kk = JSON.stringify([myState.s, hostActs, [...conns].map(([p, c]) => [p, c.on, c.a, c.y, c.n]), myPres, Object.keys(BRAIN.typing)]);
+  if (kk === bcKey && now - bcAt < 4000) return;
+  bcKey = kk; bcAt = now;
   for (const [pid, c] of conns) {
     if (!c.on || !c.conn.open) continue;
     const v = viewFor(pid), s = JSON.stringify(v), prev = lastSent.get(pid);
@@ -691,7 +754,8 @@ function viewFor(pid){
   else if (st.ph === 'night' && st.ns === 1 && (isPack(role) || ghost)) for (const x in hostActs) if (isPack(st.R[x])) acts[x] = hostActs[x];
   S.acts = acts;
   const info = peersInfo(), k = key(st);
-  S.rdy = st.ph === 'day' ? Object.keys(info).filter(x => info[x].y === k) : [];
+  S.rdy = st.ph === 'day' ? (st.rdy || []) : [];
+  S.ty = st.ph === 'day' ? Object.keys(BRAIN.typing).filter(x => st.A[x]) : [];
   S.on = onlineList();
   S.peers = {}; for (const x of S.on) S.peers[x] = x === st.h ? hostIdOf(code) : peerIdOf(code, x);
   const myAct = info[pid] && info[pid].a;
@@ -721,7 +785,7 @@ function joinRoom(c, tries=0){
 }
 function connectHost(){
   if (!peer || peer.destroyed) return;
-  const conn = peer.connect(hostIdOf(code), { reliable: true });
+  const conn = peer.connect(hostIdOf(code), { reliable: true, serialization: 'json' });
   hostConn = conn;
   conn.on('open', () => { connected = true; setStatus(''); conn.send({ t:'hello', pid: me.pid, n: me.name }); if (myPres.a || myPres.y) conn.send({ t:'pres', a: myPres.a || null, y: myPres.y || null }); refresh(); });
   conn.on('data', d => {
@@ -740,7 +804,7 @@ function scheduleReconnect(){
   retryTimer = setTimeout(() => { if (!connected && peer && !peer.destroyed) connectHost(); }, 3000);
 }
 function notFound(){
-  $('#gBanner').innerHTML = `<h2>ไม่พบห้อง ${esc(code)}</h2><p>ตรวจรหัสอีกครั้ง หรือให้เพื่อนสร้างห้องก่อน แล้วลองเข้าใหม่</p>`;
+  $('#gBanner').html = `<h2>ไม่พบห้อง ${esc(code)}</h2><p>ตรวจรหัสอีกครั้ง หรือให้เพื่อนสร้างห้องก่อน แล้วลองเข้าใหม่</p>`;
   setTimeout(() => { if (!view && !hosting) { toast('ไม่พบห้อง ' + code); leaveGame(); } }, 3500);
 }
 function setStatus(t){ $('#gConn').textContent = t || ''; }
@@ -979,6 +1043,267 @@ function botPick(st, p, need, acts){
   if (o.includes('n') && Math.random() < (ONCE.includes(ro) ? .7 : .6)) return 'n';
   return pids.length ? pickRand(pids) : o[0];
 }
+/* ================= bot brain: suspicion, deception, table talk (runs on the host) ================= */
+const BRAIN = { g:null, mem:{}, claims:[], acc:[], votes:[], typing:{}, phaseKey:'', llmBusy:{} };
+function brainReset(g){ Object.assign(BRAIN, { g, mem:{}, claims:[], acc:[], votes:[], typing:{}, phaseKey:'', llmBusy:{} }); }
+function bmem(p){
+  return BRAIN.mem[p] || (BRAIN.mem[p] = { noise:{}, accusedBy:{}, plan:[], readyAt:0, reacted:0, defended:1, lastAccuser:null, lastAccusedAt:0,
+    talk: .6 + Math.random() * .9, guile: Math.random(), said:0, claimed:0, llmSus:null });
+}
+const sayPick = a => { const recent = new Set(chatLog.slice(-15).map(m => m.txt)); const f = a.filter(x => !recent.has(x)); return pickRand(f.length ? f : a); };
+function knownRole(st, b, x){
+  const rb = st.R[b], rx = st.R[x];
+  if (!st.A[x] || x === b) return rx;
+  if ((isPack(rb) || rb === 'minion') && isPack(rx)) return rx;
+  if (rb === 'mason' && rx === 'mason') return rx;
+  if (st.L && st.L.includes(b) && st.L.includes(x)) return rx;
+  if (st.pr === x) return rx;
+  return null;
+}
+function voteHistoryScore(st, x){
+  let s = 0;
+  for (const v of BRAIN.votes) { const t = v.acts[x]; if (!t || t === 'x' || st.A[t]) continue; s += isPack(st.R[t]) ? -.45 : .4; }
+  return s;
+}
+function sus(st, b, x){
+  const m = bmem(b);
+  if (m.noise[x] === undefined) m.noise[x] = Math.random() * .7;
+  const k = knownRole(st, b, x);
+  if (k) return isPack(k) ? (isPack(st.R[b]) ? -10 : 10) : -6;
+  let s = m.noise[x] + voteHistoryScore(st, x);
+  for (const e of st.sr || []) if (e[4] === b && e[2] === x) { if (e[1] === 's') s += e[3] ? 9 : -5; if (e[1] === 'i' && e[3]) s += .8; }
+  for (const c of BRAIN.claims) {
+    if (c.t !== x || c.by === b) continue;
+    const trust = Math.max(0, 1 - Math.max(0, m.noise[c.by] || 0) - Math.max(0, voteHistoryScore(st, c.by)));
+    s += (c.w ? 1.6 : -1.1) * trust;
+  }
+  const seerClaims = BRAIN.claims.filter(c => c.role === 'seer').map(c => c.by);
+  if (seerClaims.includes(x) && new Set(seerClaims).size > 1) s += .6;
+  if (BRAIN.claims.some(c => c.by === x && c.t === b && c.w) && st.R[b] !== 'wolf') s += 2.5;
+  s += (m.accusedBy[x] || 0) * .3;
+  for (const a of BRAIN.acc) if (a.t === x && a.by !== b) s += .12;
+  if (m.llmSus === x) s += 1.2;
+  return s;
+}
+/* who a wolf wants dead or framed: claimed seers first, then whoever the room already suspects */
+function wolfTarget(st, b, pool){
+  const threat = x => (BRAIN.claims.some(c => c.by === x) ? 3 : 0) + BRAIN.acc.filter(a => a.by === x && isPack(st.R[a.t])).length * 1.2 + Math.random();
+  return pool.slice().sort((a, c) => threat(c) - threat(a))[0];
+}
+function framePick(st, b, pool){
+  const crowd = x => { let s = 0; for (const o of alive(st)) if (!isPack(st.R[o]) && o !== x) s += sus(st, o, x); return s + Math.random() * .5; };
+  return pool.slice().sort((a, c) => crowd(c) - crowd(a))[0];
+}
+function topSuspect(st, b, pool){ return pool.slice().sort((a, c) => sus(st, b, c) - sus(st, b, a))[0]; }
+function brainVote(st, b, need, acts){
+  const o = need.o, pool = o.filter(x => x !== 'x' && x !== b);
+  if (!pool.length) return o[0];
+  const rb = st.R[b];
+  if (isPack(rb)) {
+    const safe = pool.filter(x => !isPack(st.R[x]));
+    if (!safe.length) return o.includes('x') ? 'x' : pool[0];
+    const leading = Object.values(acts).filter(t => safe.includes(t));
+    if (leading.length && Math.random() < .6) { const c = {}; leading.forEach(t => c[t] = (c[t]||0)+1); return Object.keys(c).sort((a, z) => c[z]-c[a])[0]; }
+    return framePick(st, b, safe);
+  }
+  const top = topSuspect(st, b, pool), topS = sus(st, b, top);
+  const tally = {}; Object.values(acts).forEach(t => { if (pool.includes(t)) tally[t] = (tally[t]||0) + 1; });
+  const herd = Object.keys(tally).sort((a, z) => tally[z]-tally[a])[0];
+  if (herd && herd !== top && sus(st, b, herd) > topS - .6 && Math.random() < .5) return herd;
+  if (topS < .35 && o.includes('x') && Math.random() < .35) return 'x';
+  return top;
+}
+function brainNight(st, b, need, acts){
+  const ro = st.R[b], o = need.o, pids = o.filter(x => x.length > 2 && x[0] !== 'H');
+  if (st.ph === 'hunter') return topSuspect(st, b, pids) || pids[0];
+  if (need.n > 1) return shuffle([...pids]).slice(0, need.n);
+  if (isPack(ro)) {
+    const human = Object.keys(acts).find(x => isPack(st.R[x]) && !isBot(x) && typeof acts[x] === 'string');
+    if (human) return acts[human];
+    const mate = Object.keys(acts).find(x => isPack(st.R[x]) && typeof acts[x] === 'string');
+    if (mate && Math.random() < .85) return acts[mate];
+    return wolfTarget(st, b, pids);
+  }
+  if (ro === 'seer' || ro === 'appr' || ro === 'aura' || ro === 'sorc') {
+    const checked = new Set((st.sr || []).filter(e => e[4] === b).map(e => e[2]));
+    const fresh = pids.filter(x => !checked.has(x) && !knownRole(st, b, x));
+    return topSuspect(st, b, fresh.length ? fresh : pids);
+  }
+  if (ro === 'bodyguard') { const seer = BRAIN.claims.map(c => c.by).find(x => pids.includes(x)); return seer && Math.random() < .75 ? seer : pickRand(pids); }
+  if (ro === 'witch') {
+    const h = o.filter(x => x[0] === 'H');
+    if (h.length && (h.some(x => BRAIN.claims.some(c => c.by === x.slice(1))) || Math.random() < .45)) return pickRand(h);
+    const t = topSuspect(st, b, pids); if (t && sus(st, b, t) > 3) return t;
+    return 'n';
+  }
+  if (ro === 'huntress' || ro === 'revealer') { const t = topSuspect(st, b, pids); return t && sus(st, b, t) > (ro === 'revealer' ? 4 : 2.5) ? t : 'n'; }
+  if (ro === 'sk' || ro === 'chupa') return pickRand(pids);
+  if (ro === 'tm') return Math.random() < .2 ? 'y' : 'n';
+  if (o.includes('n') && Math.random() < (ONCE.includes(ro) ? .7 : .5)) return 'n';
+  return pids.length ? pickRand(pids) : o[0];
+}
+/* ----- reading the table: human and bot messages in the village channel ----- */
+const ACC_RE = /หมาป่า|สงสัย|โหวต|แปลก|โกหก|ฆ่า|ร้าย|ไม่น่าไว้ใจ|มั่ว|ตัวปลอม|ปลอม/;
+const NEG_RE = /ไม่ใช่หมาป่า|คนดี|บริสุทธิ์|ไม่ใช่ตัวร้าย|เชื่อใจ|ไม่ได้เป็นหมาป่า/;
+const CLAIM_RE = /(ผู้หยั่งรู้|หมอดู|ส่อง)/;
+const SELF_RE = /(ฉัน|ผม|เรา|กู|หนู|ข้า|เค้า|เรา)/;
+function brainHear(st, pid, txt){
+  if (!st || st.ph === 'lobby' || st.ph === 'end') return;
+  const now = Date.now();
+  const named = st.P.filter(p => p.i !== pid && p.n && txt.includes(p.n)).map(p => p.i);
+  const neg = NEG_RE.test(txt), acc = ACC_RE.test(txt) && !neg;
+  if (CLAIM_RE.test(txt) && SELF_RE.test(txt) && named.length && !BRAIN.claims.some(c => c.by === pid && c.t === named[0])) {
+    BRAIN.claims.push({ by: pid, role:'seer', t: named[0], w: /หมาป่า/.test(txt) && !neg ? 1 : 0, r: st.r });
+  }
+  for (const t of named) {
+    if (acc) {
+      BRAIN.acc.push({ by: pid, t, at: now });
+      if (isBot(t)) { const m = bmem(t); m.lastAccuser = pid; m.lastAccusedAt = now; m.defended = 0; m.accusedBy[pid] = (m.accusedBy[pid] || 0) + 1; }
+    }
+  }
+  if (BRAIN.acc.length > 80) BRAIN.acc.splice(0, BRAIN.acc.length - 80);
+}
+/* ----- what a bot says ----- */
+function botLine(st, b){
+  const m = bmem(b), rb = st.R[b], al = alive(st), N = id => nameOf(st, id), others = al.filter(x => x !== b);
+  if (!others.length) return null;
+  const now = Date.now(), pack = isPack(rb);
+  const nw = st.nw && st.nw.r === st.r ? st.nw : null;
+  if (!m.reacted && nw && Math.random() < .55) {
+    m.reacted = 1;
+    if (!nw.d.length) return sayPick(['เมื่อคืนรอดกันหมด แปลว่ามีคนคุ้มกันได้ถูกตัวแน่ๆ', 'ไม่มีใครตายเลย ดีแล้ว แต่ระวังกันด้วยนะ', 'โชคดีที่ไม่มีใครตาย หมาป่าคงพลาดเป้า']);
+    const v = nw.d[0];
+    return sayPick([`ไม่นะ ${N(v)} ไม่น่าตายเลย`, `${N(v)} เป็น${roleTh(st.R[v])}แท้ๆ เสียดายมาก`, `หมาป่าเลือก ${N(v)} แปลว่า ${N(v)} คงรู้อะไรบางอย่าง`, `เสียใจด้วยนะ ${N(v)} ใครฆ่า ${N(v)} ต้องชดใช้`]);
+  }
+  if (!m.defended && m.lastAccuser && now - m.lastAccusedAt < 25000 && st.A[m.lastAccuser]) {
+    m.defended = 1; const a = m.lastAccuser;
+    if (pack && m.guile > .5) return sayPick([`ใจเย็นๆ ${N(a)} ฉันเป็นชาวบ้านจริงๆ ลองดูคนที่เงียบๆ สิ`, `${N(a)} รีบชี้ฉันแบบนี้ ฉันว่าเธอเองนั่นแหละน่าสงสัย`, `ฉันไม่ใช่นะ! ถ้าโหวตฉันออก หมาป่าจะได้ใจ`]);
+    return sayPick([`ไม่ใช่ฉันนะ ${N(a)} ฉันเป็นฝ่ายชาวบ้าน`, `${N(a)} ชี้ฉันทำไม มีหลักฐานอะไร`, `ฉันว่า ${N(a)} พยายามโยนความผิดให้ฉันอยู่นะ`]);
+  }
+  if (rb === 'seer' && !m.claimed) {
+    const res = (st.sr || []).filter(e => e[4] === b && e[1] === 's');
+    const hit = res.find(e => e[3] && st.A[e[2]]);
+    if (hit || (res.length >= 2 && Math.random() < .5) || (res.length && st.r >= 3)) {
+      m.claimed = 1; const e = hit || res[res.length - 1];
+      BRAIN.claims.push({ by: b, role:'seer', t: e[2], w: e[3], r: st.r });
+      return e[3] ? `ฉันเป็นผู้หยั่งรู้! เมื่อคืนส่อง ${N(e[2])} เป็นหมาป่า โหวต ${N(e[2])} เลย` : `ฉันเป็นผู้หยั่งรู้ ส่อง ${N(e[2])} แล้ว ไม่ใช่หมาป่า เชื่อใจได้`;
+    }
+  }
+  if (pack && !m.claimed && m.guile > .45) {
+    const accusedMe = BRAIN.claims.find(c => c.by !== b && c.w && (c.t === b || isPack(st.R[c.t])) && st.A[c.by]);
+    if (accusedMe || (Math.random() < .12 && !BRAIN.claims.length && st.r >= 2)) {
+      const safe = others.filter(x => !isPack(st.R[x]));
+      const victim = accusedMe ? accusedMe.by : framePick(st, b, safe);
+      if (victim) { m.claimed = 1; BRAIN.claims.push({ by: b, role:'seer', t: victim, w: 1, r: st.r });
+        return accusedMe ? `อย่าไปเชื่อ ${N(victim)}! ฉันต่างหากคือผู้หยั่งรู้ตัวจริง เมื่อคืนส่อง ${N(victim)} เป็นหมาป่า` : `ขอเปิดตัวเลย ฉันเป็นผู้หยั่งรู้ ส่อง ${N(victim)} แล้วเป็นหมาป่า`; }
+    }
+  }
+  if (pack) {
+    const mateAcc = BRAIN.acc.slice().reverse().find(a => isPack(st.R[a.t]) && a.t !== b && now - a.at < 30000 && st.A[a.t]);
+    const safe = others.filter(x => !isPack(st.R[x]));
+    if (mateAcc && Math.random() < .5 && safe.length) { const alt = framePick(st, b, safe); return sayPick([`${N(mateAcc.t)} ไม่น่าใช่หรอก ฉันว่า ${N(alt)} แปลกกว่า`, `อย่าเพิ่งรีบโหวต ${N(mateAcc.t)} ลองคิดถึง ${N(alt)} ดูก่อน`]); }
+    if (safe.length) { const t = framePick(st, b, safe); return accuseLine(st, b, t); }
+  }
+  const agree = BRAIN.acc.slice().reverse().find(a => a.by !== b && a.t !== b && now - a.at < 30000 && st.A[a.t] && sus(st, b, a.t) > .5);
+  if (agree && Math.random() < .45) return sayPick([`เห็นด้วยกับ ${N(agree.by)} ${N(agree.t)} น่าสงสัยจริง`, `ฉันก็คิดแบบ ${N(agree.by)} นะ ${N(agree.t)} ดูมีพิรุธ`]);
+  const quiet = others.filter(x => !isBot(x) && !BRAIN.acc.some(a => a.by === x)).filter(x => !isPack(st.R[x]) || !pack);
+  if (quiet.length && Math.random() < .2) { const q = pickRand(quiet); return sayPick([`${N(q)} เงียบจัง คิดว่าใครเป็นหมาป่า`, `${N(q)} ช่วยพูดหน่อย สงสัยใครบ้าง`]); }
+  return accuseLine(st, b, topSuspect(st, b, others));
+}
+function accuseLine(st, b, t){
+  if (!t) return null;
+  const N = id => nameOf(st, id), why = [];
+  const v = BRAIN.votes.find(v => v.acts[t] && v.acts[t] !== 'x' && !st.A[v.acts[t]] && !isPack(st.R[v.acts[t]]));
+  if (v) why.push(`เมื่อวานโหวต ${N(v.acts[t])} ที่เป็น${roleTh(st.R[v.acts[t]])}`);
+  if (BRAIN.acc.some(a => a.by === t)) why.push('ชี้คนอื่นเร็วเกินไป');
+  return sayPick([
+    `ฉันสงสัย ${N(t)}${why.length ? ' ' + why[0] : ' ท่าทางแปลกๆ'}`,
+    `${N(t)} มีพิรุธนะ${why.length ? ' ' + why[0] : ' พูดน้อยผิดปกติ'}`,
+    `วันนี้โหวต ${N(t)} กันไหม ฉันไม่ไว้ใจเลย`,
+    `ฉันว่า ${N(t)} เป็นหมาป่า${why.length ? ' ' + why[why.length - 1] : ''}`
+  ]);
+}
+/* ----- optional LLM table talk (host's own Anthropic API key) ----- */
+async function llmLine(st, b){
+  const rb = st.R[b], N = id => nameOf(st, id), al = alive(st);
+  const secret = [];
+  if (isPack(rb) || rb === 'minion') secret.push('เพื่อนหมาป่า: ' + al.filter(x => x !== b && isPack(st.R[x])).map(N).join(', '));
+  (st.sr || []).filter(e => e[4] === b).forEach(e => secret.push(`คืน ${e[0]} คุณส่อง ${N(e[2])}: ${e[1]==='s' ? (e[3] ? 'เป็นหมาป่า' : 'ไม่ใช่หมาป่า') : e[1]==='a' ? (e[3] ? 'มีบทบาทพิเศษ' : 'ไม่มีบทบาทพิเศษ') : e[1]==='o' ? (e[3] ? 'เป็นผู้หยั่งรู้' : 'ไม่ใช่ผู้หยั่งรู้') : (e[3] ? 'มีหมาป่าใกล้ๆ' : 'ไม่มีหมาป่าใกล้ๆ')}`));
+  const dead = st.P.filter(p => !st.A[p.i]).map(p => `${p.n} (${roleTh(st.R[p.i])})`).join(', ') || '-';
+  const chat = chatLog.filter(m => m.ch === 'v').slice(-20).map(m => `${m.n}: ${m.txt}`).join('\n') || '(ยังไม่มีใครพูด)';
+  const votes = BRAIN.votes.slice(-2).map(v => `วัน ${v.r}: ` + Object.entries(v.acts).map(([a, t]) => `${N(a)}→${t==='x' ? 'งด' : N(t)}`).join(', ')).join('\n') || '-';
+  const team = ROLES[rb].team === 'w' ? 'ฝ่ายหมาป่า: ห้ามเปิดเผยตัวเด็ดขาด ให้แนบเนียน โยนความสงสัยไปที่ชาวบ้าน อาจอ้างตัวเป็นบทบาทอื่นได้' : ROLES[rb].team === 's' ? 'ฝ่ายตัวเอง: ทำทุกอย่างเพื่อให้ตัวเองชนะ' : 'ฝ่ายชาวบ้าน: หาตัวหมาป่าจากเหตุผล การโหวต และคำพูดที่ขัดกัน';
+  const prompt = `คุณคือ "${N(b)}" ผู้เล่นในเกมมนุษย์หมาป่า ตอนนี้วันที่ ${st.r} ช่วงคุยกันก่อนโหวต
+บทบาทลับของคุณ: ${roleTh(rb)} (${team})
+${secret.length ? 'ข้อมูลลับที่คุณรู้: ' + secret.join(' | ') : ''}
+ผู้เล่นที่ยังมีชีวิต: ${al.map(N).join(', ')}
+ตายแล้ว: ${dead}
+การโหวตที่ผ่านมา:
+${votes}
+แชทล่าสุด:
+${chat}
+
+พิมพ์ข้อความแชท 1 ข้อความแบบคนไทยคุยเล่นเกม สั้น เป็นกันเอง ไม่เกิน 90 ตัวอักษร ตอบโต้สิ่งที่คนอื่นพูดถ้ามี ห้ามบอกว่าตัวเองเป็น AI
+ตอบเป็น JSON เท่านั้น: {"say":"ข้อความ","suspect":"ชื่อผู้เล่นที่คุณจะโหวต หรือ \"\""}`;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', signal: ctl.signal,
+      headers: { 'content-type':'application/json', 'x-api-key': cfg.ai.key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model: cfg.ai.model || 'claude-haiku-5-5', max_tokens: 200, messages: [{ role:'user', content: prompt }] }) });
+    if (!r.ok) { if (r.status === 401) toast('API key ของ AI บอทไม่ถูกต้อง'); return null; }
+    const j = await r.json(), txt = (j.content || []).map(c => c.text || '').join('');
+    const mm = txt.match(/\{[\s\S]*\}/); if (!mm) return null;
+    const o = JSON.parse(mm[0]);
+    const sp = st.P.find(p => p.n && o.suspect && String(o.suspect).includes(p.n));
+    if (sp && sp.i !== b) bmem(b).llmSus = sp.i;
+    return typeof o.say === 'string' ? o.say.replace(/[\u0000-\u001f]/g,' ').slice(0, 110) : null;
+  } catch(e) { return null; } finally { clearTimeout(to); }
+}
+/* ----- scheduling talk, typing indicators and readiness ----- */
+function brainTick(st, now){
+  if (!st.g) return;
+  if (BRAIN.g !== st.g) brainReset(st.g);
+  const pk = key(st);
+  if (pk !== BRAIN.phaseKey) {
+    BRAIN.phaseKey = pk; BRAIN.typing = {};
+    const bots = alive(st).filter(isBot);
+    if (st.ph === 'day') {
+      const dur = Math.max(20000, st.end - now);
+      for (const b of bots) {
+        const m = bmem(b); m.reacted = 0; m.plan = [];
+        const n = Math.max(1, Math.round(m.talk * (1 + Math.random() * 1.5)));
+        for (let i = 0; i < n; i++) m.plan.push(now + 4000 + Math.random() * dur * .6);
+        m.plan.sort((a, c) => a - c);
+        m.readyAt = Math.min(now + dur * .8, (m.plan[m.plan.length - 1] || now) + 5000 + Math.random() * 6000);
+      }
+    }
+    if (st.ph === 'night' && st.ns === 1) {
+      const wolves = alive(st).filter(x => isPack(st.R[x]));
+      const hb = wolves.filter(x => !isBot(x)), bw = wolves.filter(isBot);
+      if (hb.length && bw.length) {
+        const b = bw[0], pool = alive(st).filter(x => !isPack(st.R[x]));
+        const t = wolfTarget(st, b, pool);
+        if (t) setTimeout(() => relayChat(b, 'w', sayPick([`คืนนี้เอา ${nameOf(st, t)} ไหม`, `ฉันว่าเก็บ ${nameOf(st, t)} ก่อน อันตรายสุด`, `เป้าคืนนี้ ${nameOf(st, t)} ดีไหม เลือกตรงกันนะ`])), 2500);
+      }
+    }
+  }
+  if (st.ph !== 'day') return;
+  for (const b of alive(st).filter(isBot)) {
+    const m = bmem(b);
+    if (!m.plan.length || now < m.plan[0] || BRAIN.typing[b] || BRAIN.llmBusy[b]) {
+      if (!m.defended && m.lastAccuser && now - m.lastAccusedAt > 3000 && now - m.lastAccusedAt < 6000 && !BRAIN.typing[b] && !BRAIN.llmBusy[b]) m.plan.unshift(now);
+      continue;
+    }
+    m.plan.shift();
+    const useLlm = cfg.ai && cfg.ai.on && cfg.ai.key;
+    BRAIN.typing[b] = 1;
+    const send = txt => { delete BRAIN.typing[b]; delete BRAIN.llmBusy[b]; const S = myState; if (txt && S && S.ph === 'day' && S.A[b]) { relayChat(b, 'v', txt); m.said++; } refresh(); };
+    if (useLlm) { BRAIN.llmBusy[b] = 1; llmLine(myState, b).then(t => send(t || botLine(myState, b))); }
+    else { const t = botLine(st, b); setTimeout(() => send(t), 1200 + Math.min(3500, (t || '').length * 45)); }
+  }
+}
+const botReady = (p, now) => { const m = BRAIN.mem[p]; return !!m && m.readyAt > 0 && now >= m.readyAt; };
+
 function botsList(n){ return Array.from({length:n}, (_,i) => ({ i:'bot'+(i+1), n: BOT_NAMES[i % BOT_NAMES.length], b:1 })); }
 
 function hostTick(){
@@ -990,17 +1315,20 @@ function hostTick(){
     for (const id in info) if (info[id].n && !joinOrder.includes(id)) joinOrder.push(id);
     st.P = [...joinOrder.filter(id => info[id] && info[id].n).map(id => ({ i:id, n:info[id].n })), ...botsList(st.B)].slice(0,16);
   } else if (st.ph !== 'end') {
+    brainTick(st, now);
     const nd = needs(st), k = key(st), acts = {}, ba = {};
-    for (const p in nd) {
-      if (isBot(p)) { const m = botMemo[k+p] || (botMemo[k+p] = { t: botPick(st, p, nd[p], acts), at: now + 1500 + Math.random()*4000 });
-        if (now >= m.at && valid(m.t, nd[p])) { acts[p] = m.t; ba[p] = m.t; } }
+    for (const p of Object.keys(nd).sort((a, c) => isBot(a) - isBot(c))) {
+      if (isBot(p)) {
+        const m = botMemo[k+p] || (botMemo[k+p] = { at: now + (st.ph === 'vote' ? 4000 + Math.random() * Math.max(3000, (st.end - now) * .45) : 1500 + Math.random() * 4000) });
+        if (now >= m.at) { if (m.t === undefined) m.t = st.ph === 'vote' ? brainVote(st, p, nd[p], acts) : brainNight(st, p, nd[p], acts); if (valid(m.t, nd[p])) { acts[p] = m.t; ba[p] = m.t; } } }
       else { const a = info[p] && info[p].a; if (a && a.k === k && valid(a.t, nd[p])) acts[p] = a.t; }
     }
     st.ba = ba; hostActs = acts;
     let go;
-    if (st.ph === 'day') { const al = alive(st); go = now >= st.end || (al.length > 0 && al.every(p => isBot(p) || (info[p] && info[p].y === k))); }
+    if (st.ph === 'day') { const al = alive(st), rd = al.filter(p => isBot(p) ? botReady(p, now) : (info[p] && info[p].y === k)); st.rdy = rd; go = now >= st.end || (al.length > 0 && rd.length * 2 > al.length); }
     else go = now >= st.end || (Object.keys(nd).length > 0 && Object.keys(nd).every(p => p in acts)) || (Object.keys(nd).length === 0 && st.ph === 'night' && now >= st.end - durOf(st,'night') + 4000);
-    if (go) resolve(st, acts, now);
+    if (go && st.ph === 'vote') BRAIN.votes.push({ r: st.r, acts: Object.assign({}, acts) });
+    if (go) { resolve(st, acts, now); if (st.ph !== 'day') st.rdy = []; }
   }
   if (JSON.stringify(st) !== JSON.stringify(myState)) { st.s = (myState.s||0) + 1; myState = st; }
 }
@@ -1087,8 +1415,8 @@ function render(S){
   $('#copyBtn').hidden = solo;
   if (!S) {
     document.body.dataset.ph = '';
-    $('#gBanner').innerHTML = `<h2>กำลังเข้าห้อง ${esc(code || '')}…</h2><p>รอการเชื่อมต่อ</p>`;
-    ['#gSeats','#gRole','#gPrompt','#gHost','#gLog'].forEach(s => $(s).innerHTML = '');
+    $('#gBanner').html = `<h2>กำลังเข้าห้อง ${esc(code || '')}…</h2><p>รอการเชื่อมต่อ</p>`;
+    ['#gSeats','#gRole','#gPrompt','#gHost','#gLog'].forEach(s => $(s).html = '');
     return;
   }
   const R = S.R || {}, k = key(S), r = S.r;
@@ -1129,7 +1457,7 @@ function render(S){
     if (S.ex && S.ex.r === r && S.A[S.ex.p]) bp.push(`${N(S.ex.p)} ถูกหญิงแก่ไล่ออกนอกหมู่บ้าน วันนี้ห้ามพูดและห้ามโหวต`);
     if (S.sil && S.sil.r === r && S.A[S.sil.p]) bp.push(`${N(S.sil.p)} โดนเวทมนตร์ วันนี้ห้ามพูดและห้ามโหวต`);
     if (S.tm === r) bp.push('มีคนก่อเรื่อง วันนี้จะโหวตประหาร 2 รอบ');
-    bp.push('ถกเถียงกันว่าใครคือตัวร้าย');
+    bp.push(`ถกเถียงกันว่าใครคือตัวร้าย · โหวตข้ามช่วงเช้าแล้ว ${(S.rdy || []).length}/${alive(S).length} คน`);
   } else if (S.ph === 'vote') {
     bh = S.vn === 2 ? 'โหวตประหารรอบที่ 2' : 'ถึงเวลาโหวตประหาร';
     if (S.vn === 2 && S.vr) bp.push(!S.vr.o ? 'รอบแรกไม่มีใครถูกประหาร' : S.vr.n ? `รอบแรก ${N(S.vr.o)} รอดจากการประหาร` : `รอบแรกประหาร ${list(S.vr.d)}`);
@@ -1141,7 +1469,7 @@ function render(S){
     bp.push('ผู้ชนะ: ' + (S.wp || []).map(id => N(id)).join(', '));
   }
   if (hostGone && S.ph !== 'end') bp.push(`<span style="color:var(--blood)">ขาดการเชื่อมต่อกับโฮสต์ กำลังเชื่อมใหม่…</span>`);
-  $('#gBanner').innerHTML = `<h2 class="${S.ph==='end'?'win':''}">${bh}</h2><p>${bp.join('<br>')}</p>`;
+  $('#gBanner').html = `<h2 class="${S.ph==='end'?'win':''}">${bh}</h2><p>${bp.join('<br>')}</p>`;
 
   /* seats */
   const votes = {}, wolfPicks = {};
@@ -1151,7 +1479,7 @@ function render(S){
   const inCult = x => (S.cult||[]).includes(x) || R[x] === 'cult';
   const amCult = meIn && inCult(me.pid) && S.cult && S.cult.length + 1 > 1 && S.ph !== 'lobby';
 
-  $('#gSeats').innerHTML = S.P.map(p => {
+  $('#gSeats').html = S.P.map(p => {
     const isMe = p.i === me.pid, dead = S.ph !== 'lobby' && !S.A[p.i], ro = R[p.i];
     const tags = [], lobby = S.ph === 'lobby';
     if (isMe) tags.push('<span class="tag me">คุณ</span>');
@@ -1171,7 +1499,8 @@ function render(S){
       if (S.hood && S.hood.m.includes(p.i) && (ghost || S.hood.p === me.pid)) tags.push('<span class="tag info">เป้าอันธพาล</span>');
       if (S.dop && S.dop.m === p.i && (ghost || S.dop.p === me.pid)) tags.push('<span class="tag info">ถูกเลียนแบบ</span>');
       if ((S.ph === 'day' || S.ph === 'vote') && !dead && ((S.ex && S.ex.r === r && S.ex.p === p.i) || (S.sil && S.sil.r === r && S.sil.p === p.i))) tags.push('<span class="tag info">ห้ามพูด</span>');
-      if (S.ph === 'day' && !dead && (p.b || (S.rdy || []).includes(p.i))) tags.push('<span class="tag ok">พร้อมโหวต</span>');
+      if (S.ph === 'day' && !dead && (S.rdy || []).includes(p.i)) tags.push('<span class="tag ok">โหวตข้ามแล้ว</span>');
+      if (S.ph === 'day' && !dead && (S.ty || []).includes(p.i)) tags.push('<span class="tag info typing">กำลังพิมพ์…</span>');
       if (myRole === 'witch' && S.ph === 'night' && S.ns === 2 && (S.wv || []).includes(p.i)) tags.push('<span class="tag wolf">เหยื่อหมาป่า</span>');
       if (dead) tags.push('<span class="tag">ตายแล้ว</span>');
     }
@@ -1198,13 +1527,13 @@ function render(S){
   if (meIn && myRole) {
     const RO = ROLES[myRole], T = TEAM[RO.team];
     const changed = S.cu && S.cu.p === me.pid ? '<p class="t-wolf" style="margin:8px 0 0">คุณถูกหมาป่ากัด และกลายเป็นมนุษย์หมาป่าแล้ว</p>' : (S.dop && S.dop.done && S.dop.p === me.pid ? '<p class="t-solo" style="margin:8px 0 0">คนที่คุณเลียนแบบตายแล้ว คุณได้บทบาทนี้แทน</p>' : '');
-    $('#gRole').innerHTML = `<div class="rolecard${revealRole?'':' hide'}"><div class="label">บทบาทของคุณ</div>
-      <div class="rbody"><div class="rhead"><div class="ico ${T.t}">${TICON[RO.team]}</div><div><h3>${RO.th}</h3><div class="muted">${T.th}</div></div></div>
+    $('#gRole').html = `<div class="rolecard${revealRole?'':' hide'}"><div class="label">บทบาทของคุณ</div>
+      <div class="rbody"><div class="rhead"><div class="ico ${T.t}">${rIcon(myRole)}</div><div><h3>${RO.th}</h3><div class="muted">${T.th}</div></div></div>
       <p class="muted" style="margin:10px 0 0">${RO.desc}</p>${changed}</div>
       <button class="btn-sm" id="revealBtn">${revealRole?'ซ่อนบทบาท':'แตะเพื่อดูบทบาท'}</button></div>`;
     $('#revealBtn').onclick = () => { revealRole = !revealRole; lastSig=''; refresh(); };
-  } else if (S.ph !== 'lobby' && !meIn) $('#gRole').innerHTML = '<div class="rolecard"><div class="label">ผู้ชม</div><p class="muted" style="margin:0">เกมเริ่มไปแล้ว คุณดูในฐานะผู้ชมและเห็นบทบาทของทุกคน รอบหน้าจะได้เข้าร่วม</p></div>';
-  else $('#gRole').innerHTML = '';
+  } else if (S.ph !== 'lobby' && !meIn) $('#gRole').html = '<div class="rolecard"><div class="label">ผู้ชม</div><p class="muted" style="margin:0">เกมเริ่มไปแล้ว คุณดูในฐานะผู้ชมและเห็นบทบาทของทุกคน รอบหน้าจะได้เข้าร่วม</p></div>';
+  else $('#gRole').html = '';
 
   /* prompt */
   let pr = '';
@@ -1230,7 +1559,8 @@ function render(S){
       else pr = `<b>หลับตาแล้วรอ</b><span class="muted">${PASSIVE}</span>`;
     } else if (S.ph === 'day') {
       const ready = myPres.y === k;
-      pr = `<b>คุยกันให้รู้เรื่อง</b><span class="muted">ถ้าทุกคนพร้อม จะเข้าสู่รอบโหวตทันที</span><button id="readyBtn" class="${ready?'':'btn-main'}">${ready?'ยกเลิกพร้อมโหวต':'พร้อมโหวต'}</button>`;
+      const al0 = alive(S).length, rc = (S.rdy || []).length, need0 = Math.floor(al0 / 2) + 1;
+      pr = `<b>คุยกันให้รู้เรื่อง</b><span class="muted">ถ้าโหวตข้ามเกินครึ่ง (${need0} จาก ${al0} คน) จะเข้าสู่รอบโหวตประหารทันที · ตอนนี้ ${rc} คน</span><button id="readyBtn" class="${ready?'':'btn-main'}">${ready?'ยกเลิกโหวตข้าม':'โหวตข้ามช่วงเช้า'}</button>`;
     } else if (S.ph === 'vote') {
       if (!myNeed) pr = '<b>วันนี้คุณโหวตไม่ได้</b><span class="muted">คุณถูกห้ามพูดและห้ามโหวต</span>';
       else if (myRole === 'pacifist') pr = `<b>คุณเป็นผู้รักสงบ</b><span class="muted">ทำได้แค่งดออกเสียง</span><button data-o="x" class="${myPick==='x'?'btn-main':''}">งดออกเสียง</button>`;
@@ -1239,7 +1569,7 @@ function render(S){
   }
   const mine = (S.sr || []).filter(e => e[4] === me.pid);
   if (meIn && mine.length && S.ph !== 'lobby') pr += '<div class="seerlist"><span class="label">ผลที่คุณส่องมา</span>' + mine.map(e => `<span>คืน ${e[0]}: ${resultText(S, e)}</span>`).join('') + '</div>';
-  $('#gPrompt').innerHTML = pr ? `<div class="prompt">${pr}</div>` : '';
+  $('#gPrompt').html = pr ? `<div class="prompt">${pr}</div>` : '';
   $('#gPrompt').querySelectorAll('[data-o]').forEach(b => b.onclick = () => setPres({ a:{ k, t: b.dataset.o } }));
   const rb = $('#readyBtn'); if (rb) rb.onclick = () => setPres({ y: myPres.y === k ? null : k });
 
@@ -1263,7 +1593,7 @@ function render(S){
     } else if (S.ph === 'end') hc = `<div class="panel"><div class="label">โฮสต์</div><button class="btn-main" id="againBtn">เล่นอีกรอบ</button></div>`;
     else hc = `<div class="panel"><div class="label">โฮสต์</div><button id="skipBtn">${S.ph==='day'?'เริ่มโหวตเลย':'ข้ามไปขั้นต่อไป'}</button><span class="muted" style="font-size:13px">คนที่ยังไม่เลือกจะถือว่าไม่ทำอะไร</span></div>`;
   }
-  $('#gHost').innerHTML = hc;
+  $('#gHost').html = hc;
   const lim = { B:[0,15,1], dt:[30,300,30], nt:[20,120,5], vt:[20,120,10] };
   $('#gHost').querySelectorAll('[data-inc],[data-dec]').forEach(b => b.onclick = () => {
     const id = b.dataset.inc || b.dataset.dec, d = b.dataset.inc ? 1 : -1, [lo,hi,st] = lim[id];
@@ -1286,7 +1616,7 @@ function render(S){
     if (t==='w') return 'จบเกม';
     return '';
   }).filter(Boolean).reverse();
-  $('#gLog').innerHTML = lines.length ? lines.map(l => `<div>${l}</div>`).join('') : '<div class="muted">ยังไม่มีเหตุการณ์</div>';
+  $('#gLog').html = lines.length ? lines.map(l => `<div>${l}</div>`).join('') : '<div class="muted">ยังไม่มีเหตุการณ์</div>';
 }
 
 /* ================= chat (relayed and filtered by the host) ================= */
@@ -1331,6 +1661,7 @@ function relayChat(pid, ch, txt){
   if (chatG !== st.g) { chatLog = []; chatG = st.g; }
   const m = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), pid, n: nameOfAny(pid), ch, txt };
   chatLog.push(m); if (chatLog.length > 150) chatLog.shift();
+  if (ch === 'v') brainHear(st, pid, txt);
   for (const x of [me.pid, ...conns.keys()]) {
     if (!canSee(ctxFor(st, x), ch)) continue;
     if (x === me.pid) { addMsg(m); renderChat(); continue; }
@@ -1492,7 +1823,7 @@ function resumeAudio(){
   for (const c of V.calls.values()) if (c.audio) c.audio.play().catch(()=>{});
   V.needGesture = false; renderVoiceUI();
 }
-function level(an){ if (!an) return 0; const b = new Uint8Array(an.fftSize); an.getByteTimeDomainData(b); let s = 0; for (const v of b) { const x = (v - 128) / 128; s += x*x; } return Math.sqrt(s / b.length); }
+function level(an){ if (!an) return 0; const b = an._buf || (an._buf = new Uint8Array(an.fftSize)); an.getByteTimeDomainData(b); let s = 0; for (const v of b) { const x = (v - 128) / 128; s += x*x; } return Math.sqrt(s / b.length); }
 function chanOf(S, pid){
   if (!S || S.ph === 'lobby' || S.ph === 'end') return 'v';
   if (!S.P.some(p => p.i === pid) || !S.A[pid]) return 'g';
@@ -1507,12 +1838,12 @@ setInterval(() => {
   const S = view, vh = (S && S.vh) || [], vs = (S && S.vs) || [], speaking = {};
   for (const [pid, c] of V.calls) if (c.an && vh.includes(pid) && !V.deaf && (cfg.pvol[pid] ?? 100) > 0 && level(c.an) > 0.03) speaking[pid] = 1;
   if (transmitting() && !preMute() && lvl > 0.03 && (vs.length || (S && (S.ph === 'lobby' || S.ph === 'end')))) speaking[me.pid] = 1;
-  const now = Date.now(), recent = {};
-  for (const m of msgs.values()) if (now - m.at < 6000 && canSee(ctx(), m.ch) && !cfg.mute[m.pid]) recent[m.pid] = m;
+  const now = Date.now(), recent = {}, c0 = ctx();
+  for (const m of msgs.values()) if (now - m.at < 6000 && canSee(c0, m.ch) && !cfg.mute[m.pid]) recent[m.pid] = m;
   document.querySelectorAll('.seat[data-pid]').forEach(el => {
     const pid = el.dataset.pid, on = !!speaking[pid], ch = chanOf(S, pid);
-    el.classList.toggle('tk', on);
-    ['v','w','g'].forEach(x => el.classList.toggle('tk-'+x, on && ch === x));
+    const cls = on ? 'tk tk-' + ch : '';
+    if (el._tk !== cls) { el._tk = cls; el.classList.toggle('tk', on); ['v','w','g'].forEach(x => el.classList.toggle('tk-'+x, on && ch === x)); }
     const m = recent[pid], say = el.querySelector('.say');
     const t = m ? (m.ch==='w' ? '[ฝูง] ' : m.ch==='g' ? '[วิญญาณ] ' : '') + m.txt : '';
     if (say && say.textContent !== t) say.textContent = t;
@@ -1570,11 +1901,12 @@ function renderVoiceUI(){
 })();
 
 /* ================= settings + sound ================= */
-let cfg = { mode:'open', key:'KeyM', vol:70, sfx:true, mute:{}, pvol:{}, mic:'', out:'', turn:{ url:'', user:'', pass:'' } };
-try { const c = JSON.parse(store('l','ww.cfg') || 'null'); if (c && typeof c === 'object') cfg = Object.assign(cfg, c, { mute: Object.assign({}, c.mute || {}), pvol: Object.assign({}, c.pvol || {}), turn: Object.assign({ url:'', user:'', pass:'' }, c.turn || {}) }); } catch(e){}
+let cfg = { mode:'open', key:'KeyM', vol:70, sfx:true, lite:false, mute:{}, pvol:{}, mic:'', out:'', turn:{ url:'', user:'', pass:'' }, ai:{ on:false, key:'', model:'claude-haiku-5-5' } };
+try { const c = JSON.parse(store('l','ww.cfg') || 'null'); if (c && typeof c === 'object') cfg = Object.assign(cfg, c, { mute: Object.assign({}, c.mute || {}), pvol: Object.assign({}, c.pvol || {}), turn: Object.assign({ url:'', user:'', pass:'' }, c.turn || {}), ai: Object.assign({ on:false, key:'', model:'claude-haiku-5-5' }, c.ai || {}) }); } catch(e){}
+document.body.classList.toggle('lite', !!cfg.lite);
 if (!['open','ptt'].includes(cfg.mode)) cfg.mode = 'open';
 let binding = false;
-function saveCfg(){ store('l','ww.cfg', JSON.stringify(cfg)); chatSig = ''; renderChat(); applyGates(); applyVol(); renderVoiceUI(); }
+function saveCfg(){ document.body.classList.toggle('lite', !!cfg.lite); store('l','ww.cfg', JSON.stringify(cfg)); chatSig = ''; renderChat(); applyGates(); applyVol(); renderVoiceUI(); }
 function keyName(code){
   const map = { Space:'Space', ShiftLeft:'Shift ซ้าย', ShiftRight:'Shift ขวา', ControlLeft:'Ctrl ซ้าย', ControlRight:'Ctrl ขวา', AltLeft:'Alt ซ้าย', AltRight:'Alt ขวา', CapsLock:'Caps Lock', Backquote:'`', Tab:'Tab', Enter:'Enter' };
   return map[code] || String(code).replace(/^Key/,'').replace(/^Digit/,'').replace(/^Numpad/,'Num ');
@@ -1621,6 +1953,10 @@ function renderSettings(){
   $('#volIn').value = cfg.vol; $('#volOut').textContent = cfg.vol;
   $('#volIn').oninput = () => { cfg.vol = Number($('#volIn').value); $('#volOut').textContent = cfg.vol; saveCfg(); };
   $('#sfxTest').onclick = () => { audio(); sfx('night'); };
+  $('#liteOn').checked = !!cfg.lite; $('#liteOn').onchange = () => { cfg.lite = $('#liteOn').checked; saveCfg(); };
+  $('#aiOn').checked = !!cfg.ai.on; $('#aiOn').onchange = () => { cfg.ai.on = $('#aiOn').checked; saveCfg(); };
+  $('#aiKey').value = cfg.ai.key; $('#aiKey').onchange = () => { cfg.ai.key = $('#aiKey').value.trim(); saveCfg(); toast('บันทึก API key ไว้ในเครื่องนี้แล้ว'); };
+  $('#aiModel').value = cfg.ai.model; $('#aiModel').onchange = () => { cfg.ai.model = $('#aiModel').value; saveCfg(); };
   $('#turnUrl').value = cfg.turn.url; $('#turnUser').value = cfg.turn.user; $('#turnPass').value = cfg.turn.pass;
   const S = curS, list = S ? S.P.filter(p => p.i !== me.pid && !p.b) : [];
   $('#setPlayers').innerHTML = list.length ? list.map(p => { const v = cfg.pvol[p.i] ?? 100; return `<div class="pl-row"><div class="who"><span class="mini-av" style="background:hsl(${hue(p.i)} 55% 72%)">${esc([...p.n][0]||'?')}</span><span>${esc(p.n)}</span></div>
@@ -1713,7 +2049,7 @@ async function playFx(){
 function ncard(S, id, cls='', extra=''){ const n = nameOf(S, id); return `<div class="ncard ${cls}"><div class="av" style="background:hsl(${hue(id)} 55% 72%)">${esc([...n][0] || '?')}</div><div class="nn">${esc(n)}</div>${extra}</div>`; }
 function card3d(S, id){
   const r = S.R[id], RO = ROLES[r] || ROLES.villager, t = RO.team;
-  return `<div class="c3d"><div class="in"><div class="face back"><span>คืนหมาป่า</span></div><div class="face front tc-${t}"><div class="big">${TICON[t]}</div><h3>${RO.th}</h3><div class="who">${esc(nameOf(S, id))}</div><span class="tm">${TEAM[t].th}</span></div></div></div>`;
+  return `<div class="c3d"><div class="in"><div class="face back"><span>คืนหมาป่า</span></div><div class="face front tc-${t}"><div class="big">${rIcon(r)}</div><h3>${RO.th}</h3><div class="who">${esc(nameOf(S, id))}</div><span class="tm">${TEAM[t].th}</span></div></div></div>`;
 }
 function stage(eyebrow, h, p, body=''){ return `<div class="fx-stage"><div class="fx-eyebrow">${eyebrow}</div><h2>${h}</h2>${body}${p ? `<p>${p}</p>` : ''}</div>`; }
 async function reveal(ov, S, ids, tok){
@@ -1724,7 +2060,7 @@ async function reveal(ov, S, ids, tok){
   await sleep(2900, tok);
 }
 function embers(wrap, dur){
-  const n = 30;
+  const n = cfg.lite ? 10 : 30;
   for (let i = 0; i < n; i++) setTimeout(() => {
     if (!wrap.isConnected) return;
     const e = document.createElement('span'); e.className = 'ember';
@@ -1777,7 +2113,7 @@ async function runFx(it, ov, tok){
     ov.innerHTML = `<div class="fx-stage reveal-stage tc-${t}"><div class="fx-eyebrow">${it.ch ? 'บทบาทของคุณเปลี่ยนไป' : 'บทบาทของคุณในเกมนี้'}</div>
       <div class="rv-wrap"><div class="rv-glow"></div><div class="rv-rays"></div><div class="rv-ring"></div><div class="rv-ring r2"></div>
         <div class="c3d rv-card" tabindex="0" role="button" aria-label="แตะเพื่อเปิดการ์ดบทบาท"><div class="in"><div class="face back"><span>คืนหมาป่า</span></div>
-        <div class="face front tc-${t}"><div class="big">${TICON[t]}</div><h3>${RO.th}</h3><span class="tm">${TEAM[t].th}</span><p class="rv-desc">${RO.desc}</p></div></div></div></div>
+        <div class="face front tc-${t}"><div class="big">${rIcon(it.r)}</div><h3>${RO.th}</h3><span class="tm">${TEAM[t].th}</span><p class="rv-desc">${RO.desc}</p></div></div></div></div>
       <p class="rv-hint">แตะการ์ดเพื่อเปิด · ระวังคนข้างๆ แอบดู</p><button class="btn-main" id="rvOk" hidden>เข้าใจแล้ว</button></div>`;
     sfx('hum');
     const card = ov.querySelector('.rv-card'), wrap = ov.querySelector('.rv-wrap');
@@ -1788,7 +2124,7 @@ async function runFx(it, ov, tok){
       const flip = () => {
         if (done || tok !== fxTok) return; done = true;
         card.querySelector('.in').classList.add('flip'); wrap.classList.add('open');
-        for (let i = 0; i < 34; i++) { const sp = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 130 + Math.random() * 120;
+        for (let i = 0; i < (cfg.lite ? 12 : 34); i++) { const sp = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 130 + Math.random() * 120;
           sp.className = 'spark'; sp.style.setProperty('--x', Math.cos(a) * d + 'px'); sp.style.setProperty('--y', Math.sin(a) * d + 'px'); sp.style.setProperty('--d', (.7 + Math.random() * .6) + 's');
           wrap.appendChild(sp); setTimeout(() => sp.remove(), 1500); }
         sfx('reveal_' + t);
