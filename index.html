@@ -1044,8 +1044,8 @@ function botPick(st, p, need, acts){
   return pids.length ? pickRand(pids) : o[0];
 }
 /* ================= bot brain: suspicion, deception, table talk (runs on the host) ================= */
-const BRAIN = { g:null, mem:{}, claims:[], acc:[], votes:[], typing:{}, phaseKey:'', llmBusy:{} };
-function brainReset(g){ Object.assign(BRAIN, { g, mem:{}, claims:[], acc:[], votes:[], typing:{}, phaseKey:'', llmBusy:{} }); }
+const BRAIN = { g:null, mem:{}, claims:[], acc:[], votes:[], vouch:[], replyQ:[], wolfPlan:null, typing:{}, phaseKey:'', llmBusy:{} };
+function brainReset(g){ Object.assign(BRAIN, { g, mem:{}, claims:[], acc:[], votes:[], vouch:[], replyQ:[], wolfPlan:null, typing:{}, phaseKey:'', llmBusy:{} }); }
 function bmem(p){
   return BRAIN.mem[p] || (BRAIN.mem[p] = { noise:{}, accusedBy:{}, plan:[], readyAt:0, reacted:0, defended:1, lastAccuser:null, lastAccusedAt:0,
     talk: .6 + Math.random() * .9, guile: Math.random(), said:0, claimed:0, llmSus:null });
@@ -1081,6 +1081,7 @@ function sus(st, b, x){
   if (seerClaims.includes(x) && new Set(seerClaims).size > 1) s += .6;
   if (BRAIN.claims.some(c => c.by === x && c.t === b && c.w) && st.R[b] !== 'wolf') s += 2.5;
   s += (m.accusedBy[x] || 0) * .3;
+  for (const v of BRAIN.vouch) if (v.t === x && v.by !== b) s -= .5;
   for (const a of BRAIN.acc) if (a.t === x && a.by !== b) s += .12;
   if (m.llmSus === x) s += 1.2;
   return s;
@@ -1119,6 +1120,7 @@ function brainNight(st, b, need, acts){
   if (need.n > 1) return shuffle([...pids]).slice(0, need.n);
   if (isPack(ro)) {
     const human = Object.keys(acts).find(x => isPack(st.R[x]) && !isBot(x) && typeof acts[x] === 'string');
+    if (!human && BRAIN.wolfPlan && BRAIN.wolfPlan.r === st.r && pids.includes(BRAIN.wolfPlan.t)) return BRAIN.wolfPlan.t;
     if (human) return acts[human];
     const mate = Object.keys(acts).find(x => isPack(st.R[x]) && typeof acts[x] === 'string');
     if (mate && Math.random() < .85) return acts[mate];
@@ -1147,14 +1149,35 @@ const ACC_RE = /หมาป่า|สงสัย|โหวต|แปลก|โ
 const NEG_RE = /ไม่ใช่หมาป่า|คนดี|บริสุทธิ์|ไม่ใช่ตัวร้าย|เชื่อใจ|ไม่ได้เป็นหมาป่า/;
 const CLAIM_RE = /(ผู้หยั่งรู้|หมอดู|ส่อง)/;
 const SELF_RE = /(ฉัน|ผม|เรา|กู|หนู|ข้า|เค้า|เรา)/;
-function brainHear(st, pid, txt){
+const ROLE_ALIAS = { 'หมอดู':'seer', 'การ์ด':'bodyguard', 'หมอ':'bodyguard', 'ชาวบ้าน':'villager', 'พราน':'hunter', 'หมาป่า':'wolf', 'สมุน':'minion' };
+function claimedRole(txt){
+  if (!SELF_RE.test(txt) || !/เป็น/.test(txt) || /ไม่ได้เป็น|ไม่ใช่/.test(txt)) return null;
+  let best = null, len = 0;
+  for (const k of ORDER) { const th = ROLES[k].th; if (txt.includes(th) && th.length > len) { best = k; len = th.length; } }
+  for (const a in ROLE_ALIAS) if (txt.includes(a) && a.length > len) { best = ROLE_ALIAS[a]; len = a.length; }
+  return best === 'wolf' ? null : best;
+}
+const SAVE_RE = /(โดน|ถูก)(เล็ง|กัด|ขย้ำ|โจมตี|ฆ่า)|รอด|ไม่ตาย|ช่วย(ไว้|ชีวิต)?|ชุบ|คุ้มกัน|ปกป้อง/;
+function brainHear(st, pid, txt, ch){
   if (!st || st.ph === 'lobby' || st.ph === 'end') return;
   const now = Date.now();
   const named = st.P.filter(p => p.i !== pid && p.n && txt.includes(p.n)).map(p => p.i);
   const neg = NEG_RE.test(txt), acc = ACC_RE.test(txt) && !neg;
-  if (CLAIM_RE.test(txt) && SELF_RE.test(txt) && named.length && !BRAIN.claims.some(c => c.by === pid && c.t === named[0])) {
+  if (ch === 'w') {
+    const t = named.find(x => st.A[x] && !isPack(st.R[x]));
+    if (t && !isBot(pid)) { BRAIN.wolfPlan = { r: st.r, t };
+      const bw = alive(st).filter(x => isBot(x) && isPack(st.R[x]));
+      if (bw.length) BRAIN.replyQ.push({ b: bw[0], ch:'w', at: now + 1500 + Math.random() * 1500, line: sayPick([`โอเค เอา ${nameOf(st, t)} ตามนั้น`, `ได้ ${nameOf(st, t)} คืนนี้`, `เห็นด้วย เก็บ ${nameOf(st, t)} เลย`]) }); }
+    return;
+  }
+  const role = claimedRole(txt);
+  const info = { to: pid, named, acc, neg, role, saved: null, q: /\?|ไหม|มั้ย|ใคร|ยังไง|ทำไม|อะไร/.test(txt) };
+  if (role) {
+    if (!BRAIN.claims.some(c => c.by === pid && c.role === role)) BRAIN.claims.push({ by: pid, role, t: role === 'seer' ? (named[0] || null) : null, w: role === 'seer' && named.length && /หมาป่า/.test(txt) && !neg ? 1 : 0, r: st.r });
+  } else if (CLAIM_RE.test(txt) && SELF_RE.test(txt) && named.length && !BRAIN.claims.some(c => c.by === pid && c.t === named[0])) {
     BRAIN.claims.push({ by: pid, role:'seer', t: named[0], w: /หมาป่า/.test(txt) && !neg ? 1 : 0, r: st.r });
   }
+  if (SAVE_RE.test(txt) && named.length && !acc) { info.saved = named[0]; BRAIN.vouch.push({ by: pid, t: named[0] }); }
   for (const t of named) {
     if (acc) {
       BRAIN.acc.push({ by: pid, t, at: now });
@@ -1162,6 +1185,49 @@ function brainHear(st, pid, txt){
     }
   }
   if (BRAIN.acc.length > 80) BRAIN.acc.splice(0, BRAIN.acc.length - 80);
+  /* a real person spoke: one or two bots answer them directly */
+  if (!isBot(pid) && st.ph === 'day') {
+    const bots = alive(st).filter(x => isBot(x) && x !== pid);
+    if (!bots.length) return;
+    const first = named.filter(x => isBot(x) && st.A[x]);
+    const pool = shuffle(bots.filter(x => !first.includes(x)));
+    const who = [...first, ...pool].slice(0, first.length + (role || info.saved ? (first.length ? 1 : 2) : (first.length ? 0 : 1 + (Math.random() < .4 ? 1 : 0))));
+    who.forEach((b, i) => { if (!BRAIN.replyQ.some(q => q.b === b)) BRAIN.replyQ.push({ b, ch:'v', at: now + 1800 + i * 2600 + Math.random() * 1800, info }); });
+  }
+}
+function replyLine(st, b, info){
+  const N = id => nameOf(st, id), rb = st.R[b], pack = isPack(rb), to = info.to, m = bmem(b);
+  if (!st.A[to]) return null;
+  if (info.acc && info.named.includes(b)) { m.defended = 1; return pack && m.guile > .5
+      ? sayPick([`${N(to)} ใจเย็นก่อน ฉันไม่ใช่หมาป่านะ ลองดูคนที่โหวตแปลกๆ เมื่อวานสิ`, `${N(to)} ชี้ฉันเร็วจัง หรือว่าเธอเองที่อยากให้ชาวบ้านตีกัน`])
+      : sayPick([`${N(to)} ไม่ใช่ฉันจริงๆ ฉันอยู่ฝ่ายชาวบ้าน`, `${N(to)} มีเหตุผลอะไรถึงสงสัยฉัน บอกมาหน่อย`]); }
+  if (info.role) {
+    const rt = roleTh(info.role);
+    if (rb === info.role && st.A[b]) { bmem(b).accusedBy[to] = (bmem(b).accusedBy[to] || 0) + 3;
+      return sayPick([`โกหก! ฉันต่างหากที่เป็น${rt} ${N(to)} ต้องเป็นหมาป่าแน่ๆ`, `${N(to)} อ้างเป็น${rt}ไม่ได้หรอก เพราะ${rt}ตัวจริงคือฉันเอง`]); }
+    if (pack) return m.guile > .55
+      ? sayPick([`${N(to)} อ้างเป็น${rt} ทำไมเพิ่งมาบอกตอนนี้`, `${rt}จริงเหรอ ${N(to)} พิสูจน์ได้ไหม`, `ฟังดูดีนะ ${N(to)} แต่หมาป่าก็อ้างแบบนี้ได้`])
+      : sayPick([`โอเค ${N(to)} ถ้าเป็น${rt}จริงก็ดีเลย`, `ขอบคุณที่บอกนะ ${N(to)}`]);
+    if (info.saved) return info.saved === b
+      ? sayPick([`${N(to)} ขอบคุณที่ช่วยชีวิตฉันนะ!`, `ฉันรอดเพราะ ${N(to)} จริงๆ เหรอ ขอบคุณมาก`])
+      : sayPick([`ถ้า ${N(to)} เป็น${rt}และช่วย ${N(info.saved)} ไว้ แปลว่าหมาป่าเล็ง ${N(info.saved)} ทำไมล่ะ`, `ดีมาก ${N(to)} ช่วย ${N(info.saved)} ไว้ได้ งั้น ${N(info.saved)} น่าจะเป็นคนดี`, `เชื่อ ${N(to)} นะ ${rt}ต้องเก็บไว้ให้นานที่สุด`]);
+    return sayPick([`ถ้า ${N(to)} เป็น${rt}จริง เราควรช่วยกันปกป้องไว้`, `โอเค จำไว้นะว่า ${N(to)} เป็น${rt} ถ้าโกหกจะรู้ทีหลัง`, `${N(to)} เปิดตัวเป็น${rt}เลยเหรอ กล้ามาก หมาป่าจะเล็งเธอคืนนี้แน่`]);
+  }
+  if (info.saved) return info.saved === b ? sayPick([`จริงเหรอ ${N(to)} ขอบคุณนะที่ช่วยฉัน`]) : sayPick([`แปลว่า ${N(info.saved)} โดนหมาป่าเล็ง น่าจะเป็นคนสำคัญ`, `${N(to)} รู้ได้ยังไงว่า ${N(info.saved)} โดนเล็ง`]);
+  if (info.acc && info.named.length) {
+    const deadT = info.named.find(x => !st.A[x]);
+    if (deadT && !info.named.some(x => st.A[x])) return sayPick([`${N(to)} ${N(deadT)} ตายไปแล้วนะ เป็น${roleTh(st.R[deadT])}ด้วย`, `${N(deadT)} ไม่อยู่แล้ว ${N(to)} ลองชี้คนที่ยังอยู่สิ`]);
+    const t = info.named.find(x => st.A[x]); if (!t || t === b) return null;
+    if (pack) { if (isPack(st.R[t])) { const alt = framePick(st, b, alive(st).filter(x => x !== b && !isPack(st.R[x]))); return alt ? sayPick([`${N(t)} ไม่น่าใช่นะ ${N(to)} ฉันว่า ${N(alt)} มากกว่า`]) : null; }
+      return sayPick([`เห็นด้วยกับ ${N(to)} ${N(t)} น่าสงสัยมาก`, `ใช่ ${N(t)} มีพิรุธจริง โหวตเลย`]); }
+    const sv = sus(st, b, t);
+    if (sv > .6) return sayPick([`เห็นด้วยกับ ${N(to)} ${N(t)} ดูแปลกๆ`, `ฉันก็สงสัย ${N(t)} เหมือนกัน`]);
+    const alt = topSuspect(st, b, alive(st).filter(x => x !== b && x !== t));
+    return alt ? sayPick([`ไม่น่าใช่ ${N(t)} นะ ${N(to)} ฉันว่า ${N(alt)} มากกว่า`, `${N(to)} มีหลักฐานอะไรว่าเป็น ${N(t)}`]) : null;
+  }
+  if (info.q || info.named.includes(b)) { const t = pack ? framePick(st, b, alive(st).filter(x => x !== b && !isPack(st.R[x]))) : topSuspect(st, b, alive(st).filter(x => x !== b && x !== to));
+    return t ? sayPick([`${N(to)} ตอนนี้ฉันสงสัย ${N(t)} ที่สุด`, `ถ้าถามฉันนะ ${N(to)} ฉันว่า ${N(t)}`]) : null; }
+  return sayPick([`${N(to)} พูดมีเหตุผลนะ`, `อืม ${N(to)} แล้วคิดว่าใครน่าสงสัยสุด`, `ฟังอยู่นะ ${N(to)} ว่าต่อเลย`]);
 }
 /* ----- what a bot says ----- */
 function botLine(st, b){
@@ -1224,7 +1290,7 @@ function accuseLine(st, b, t){
   ]);
 }
 /* ----- optional LLM table talk (host's own Anthropic API key) ----- */
-async function llmLine(st, b){
+async function llmLine(st, b, info){
   const rb = st.R[b], N = id => nameOf(st, id), al = alive(st);
   const secret = [];
   if (isPack(rb) || rb === 'minion') secret.push('เพื่อนหมาป่า: ' + al.filter(x => x !== b && isPack(st.R[x])).map(N).join(', '));
@@ -1243,7 +1309,7 @@ ${votes}
 แชทล่าสุด:
 ${chat}
 
-พิมพ์ข้อความแชท 1 ข้อความแบบคนไทยคุยเล่นเกม สั้น เป็นกันเอง ไม่เกิน 90 ตัวอักษร ตอบโต้สิ่งที่คนอื่นพูดถ้ามี ห้ามบอกว่าตัวเองเป็น AI
+${info ? `ตอบกลับข้อความล่าสุดของ "${N(info.to)}" โดยตรง (เรียกชื่อเขา) จะเชื่อ สงสัย หรือถามต่อก็ได้ตามบทบาทของคุณ\n` : ''}พิมพ์ข้อความแชท 1 ข้อความแบบคนไทยคุยเล่นเกม สั้น เป็นกันเอง ไม่เกิน 90 ตัวอักษร ตอบโต้สิ่งที่คนอื่นพูดถ้ามี ห้ามบอกว่าตัวเองเป็น AI
 ตอบเป็น JSON เท่านั้น: {"say":"ข้อความ","suspect":"ชื่อผู้เล่นที่คุณจะโหวต หรือ \"\""}`;
   const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
   try {
@@ -1285,6 +1351,19 @@ function brainTick(st, now){
         const t = wolfTarget(st, b, pool);
         if (t) setTimeout(() => relayChat(b, 'w', sayPick([`คืนนี้เอา ${nameOf(st, t)} ไหม`, `ฉันว่าเก็บ ${nameOf(st, t)} ก่อน อันตรายสุด`, `เป้าคืนนี้ ${nameOf(st, t)} ดีไหม เลือกตรงกันนะ`])), 2500);
       }
+    }
+  }
+  if (BRAIN.replyQ.length) {
+    const due = BRAIN.replyQ.filter(q => now >= q.at && !BRAIN.typing[q.b] && !BRAIN.llmBusy[q.b]);
+    for (const q of due) {
+      BRAIN.replyQ.splice(BRAIN.replyQ.indexOf(q), 1);
+      if (!st.A[q.b] || (q.ch === 'v' && st.ph !== 'day') || (q.ch === 'w' && st.ph !== 'night')) continue;
+      const b = q.b, useLlm = q.ch === 'v' && cfg.ai && cfg.ai.on && cfg.ai.key;
+      BRAIN.typing[b] = 1;
+      const send = txt => { delete BRAIN.typing[b]; delete BRAIN.llmBusy[b]; const S = myState; if (txt && S && S.A[b] && ((q.ch === 'v' && S.ph === 'day') || (q.ch === 'w' && S.ph === 'night'))) relayChat(b, q.ch, txt); refresh(); };
+      if (useLlm) { BRAIN.llmBusy[b] = 1; llmLine(myState, b, q.info).then(t => send(t || replyLine(myState, b, q.info))); }
+      else { const t = q.line || replyLine(st, b, q.info) || (q.info ? sayPick([`${nameOf(st, q.info.to)} ว่าไงต่อ`, `อืม ฟังอยู่นะ ${nameOf(st, q.info.to)}`]) : null); setTimeout(() => send(t), 900 + Math.min(3000, (t || '').length * 40)); }
+      const m = bmem(b); if (m.plan.length && m.plan[0] < now + 4000) m.plan[0] = now + 4000 + Math.random() * 3000;
     }
   }
   if (st.ph !== 'day') return;
@@ -1661,7 +1740,7 @@ function relayChat(pid, ch, txt){
   if (chatG !== st.g) { chatLog = []; chatG = st.g; }
   const m = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), pid, n: nameOfAny(pid), ch, txt };
   chatLog.push(m); if (chatLog.length > 150) chatLog.shift();
-  if (ch === 'v') brainHear(st, pid, txt);
+  if (ch === 'v' || ch === 'w') brainHear(st, pid, txt, ch);
   for (const x of [me.pid, ...conns.keys()]) {
     if (!canSee(ctxFor(st, x), ch)) continue;
     if (x === me.pid) { addMsg(m); renderChat(); continue; }
