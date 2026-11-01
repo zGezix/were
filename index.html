@@ -214,7 +214,7 @@ select:disabled{opacity:.5}
 
 /* Event overlay */
 @property --b{syntax:'<percentage>';inherits:true;initial-value:0%}
-.fx{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px));background:radial-gradient(ellipse at center,rgba(8,9,20,.82),rgba(4,5,12,.96));animation:fxin .35s ease}
+.fx{position:fixed;inset:0;z-index:30;overflow:hidden;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px));background:radial-gradient(ellipse at center,rgba(8,9,20,.82),rgba(4,5,12,.96));animation:fxin .35s ease}
 .fx-stage{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;max-width:100%}
 .fx-eyebrow{font-size:13px;letter-spacing:.2em;color:var(--lantern);text-transform:uppercase}
 .fx h2{font-size:clamp(26px,5.5vw,46px);font-weight:800}
@@ -277,6 +277,31 @@ select:disabled{opacity:.5}
 .endtitle.v{color:var(--leaf)} .endtitle.w{color:var(--blood)} .endtitle.s{color:var(--mist)}
 .winners{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .fx-icon{width:72px;height:72px;color:var(--dim)}
+/* Own-role reveal */
+.reveal-stage{gap:16px}
+.rv-wrap{position:relative;width:230px;height:330px;display:grid;place-items:center}
+.c3d.rv-card{width:230px;height:330px;cursor:pointer;position:relative;z-index:2}
+.rv-card .face.back{animation:rvpulse 1.6s ease-in-out infinite}
+@keyframes rvpulse{50%{box-shadow:0 0 0 3px var(--lantern),0 0 60px rgba(233,169,72,.6)}}
+.rv-card:hover .in:not(.flip),.rv-card:focus-visible .in:not(.flip){transform:translateY(-6px) rotate(-1.5deg)}
+.rv-card:focus-visible{outline:none}
+.rv-card .face.front{gap:8px;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.07),transparent 60%),linear-gradient(170deg,var(--ink-3),var(--ink-2))}
+.rv-card .face.front .big{width:86px;height:86px;filter:drop-shadow(0 0 14px var(--tc))}
+.rv-card .face.front h3{font-size:27px}
+.rv-desc{font-size:12.5px;color:var(--dim);margin:4px 0 0;line-height:1.5;max-width:none}
+.rv-rays{position:absolute;inset:-130px;border-radius:50%;background:repeating-conic-gradient(from 0deg,var(--tc) 0 5deg,transparent 5deg 15deg);-webkit-mask:radial-gradient(circle,#000 0 18%,transparent 62%);mask:radial-gradient(circle,#000 0 18%,transparent 62%);opacity:0;transform:scale(.3);transition:opacity .5s,transform .9s cubic-bezier(.2,1.2,.4,1);pointer-events:none}
+.rv-wrap.open .rv-rays{opacity:.5;transform:scale(1);animation:rvspin 16s linear infinite}
+@keyframes rvspin{to{rotate:360deg}}
+.rv-glow{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(circle,var(--tc),transparent 65%);opacity:0;pointer-events:none;transition:opacity .4s}
+.rv-wrap.open .rv-glow{opacity:.35}
+.rv-ring{position:absolute;width:230px;height:230px;border-radius:50%;border:3px solid var(--tc);opacity:0;pointer-events:none}
+.rv-wrap.open .rv-ring{animation:rvring .9s ease-out .25s forwards}
+.rv-wrap.open .rv-ring.r2{animation-delay:.45s}
+@keyframes rvring{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(2.6)}}
+.spark{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--tc);box-shadow:0 0 10px var(--tc);pointer-events:none;z-index:3;animation:spark var(--d,.9s) cubic-bezier(.1,.7,.3,1) forwards}
+@keyframes spark{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+.rv-hint{animation:rvblink 1.6s ease-in-out infinite}
+@keyframes rvblink{50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.fx *{animation-duration:.01s!important}}
 
 @media (max-width:820px){
@@ -298,6 +323,8 @@ select:disabled{opacity:.5}
   .hero{grid-template-columns:auto 1fr;padding-block:12px 20px}
   .hero > div:first-child{grid-column:1 / -1;grid-row:2}
   .ncard,.burnwrap,.c3d{width:132px;height:188px}
+  .rv-wrap,.c3d.rv-card{width:200px;height:290px}
+  .rv-card .face.front h3{font-size:23px}
   .setbtn-home{position:static;justify-self:end;align-self:center;grid-row:1;grid-column:2}
   .face.back span{margin-top:90px}
   .ncard .av{width:58px;height:58px;font-size:24px}
@@ -1002,7 +1029,7 @@ function startGame(){
     Object.assign(st, { r:0, log:[['s', n]], sr:[], used:{}, lp:{}, bless:[], cult:[], L:null, hood:null, dop:null, tg:null, nok:null, dbl:null, tm:null, pr:0,
       sil:null, ex:null, cu:null, wv:[], att:[], prot:[], hq:[], hs:null, nx:null, nw:null, vr:null, hv:null, win:null, wp:null,
       iw: roles.filter(isPack).length, g: Math.random().toString(36).slice(2,6) });
-    botMemo = {}; goPhase(st, 'night', now);
+    botMemo = {}; goPhase(st, 'night', now); st.end += 8000;
   });
   revealRole = false;
 }
@@ -1640,12 +1667,16 @@ const SFX = {
   save(){ [660, 990, 1320].forEach((f,i) => tone(f, f, .9, 'triangle', .12, i*.1)); },
   none(){ tone(660, 660, .6, 'sine', .14); },
   end(){ [523, 659, 784, 1046].forEach((f,i) => tone(f, f, 1.8, 'triangle', .14, i*.13)); },
-  msg(){ tone(880, 1180, .1, 'sine', .12); }
+  msg(){ tone(880, 1180, .1, 'sine', .12); },
+  hum(){ tone(110, 110, 1.2, 'sine', .12); tone(165, 165, 1.2, 'sine', .06); },
+  reveal_w(){ noise(.6, 500, .6, .35); tone(196, 392, .5, 'sawtooth', .07, .05); tone(330, 640, .9, 'sine', .22, .2); tone(640, 480, 1.4, 'sine', .2, 1.05); },
+  reveal_v(){ noise(.45, 3200, .8, .22); [523, 659, 784, 1046].forEach((f,i) => tone(f, f, 1.5, 'triangle', .14, .08 + i*.08)); },
+  reveal_s(){ noise(.45, 1500, .8, .22); [440, 523, 622, 880].forEach((f,i) => tone(f, f*.985, 1.6, 'sine', .13, .1 + i*.13)); }
 };
 function sfx(n){ if (!cfg.sfx || !cfg.vol || !actx) return; try { SFX[n] && SFX[n](); } catch(e){} }
 
 /* ================= event overlay ================= */
-let lastG = null, seenFx, fxQ = [], fxBusy = false, lastPhKey = null, fxTok = 0;
+let lastG = null, myRoleSeen = null, seenFx, fxQ = [], fxBusy = false, lastPhKey = null, fxTok = 0;
 const ICO_SCALE = '<svg class="fx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v18M5 21h14M4 7h16"/><path d="M6.5 7L3.5 14a3 3 0 006 0zM17.5 7l-3 7a3 3 0 006 0z"/></svg>';
 const ICO_SUN = '<svg class="fx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color:var(--lantern)"><path d="M3 18h18M7 18a5 5 0 0110 0"/><path d="M12 7V4M5.6 10.6L3.5 8.5M18.4 10.6l2.1-2.1"/></svg>';
 const sleep = (ms, tok) => new Promise(r => setTimeout(r, tok !== fxTok ? 0 : ms));
@@ -1653,7 +1684,12 @@ function resetFx(){ fxTok++; fxQ = []; fxBusy = false; seenFx = undefined; lastP
 $('#fxSkip').onclick = () => { fxTok++; fxQ = []; fxBusy = false; $('#fx').hidden = true; $('#fx').innerHTML = ''; $('#fxSkip').hidden = true; };
 function checkFx(S){
   if (!S || $('#game').hidden) return;
-  if (S.g !== lastG) { if (lastG !== null && S.g) { msgs.clear(); chatSig = ''; renderChat(); } lastG = S.g; }
+  const myR = S.R ? S.R[me.pid] : undefined;
+  if (S.g !== lastG) {
+    if (lastG !== null && S.g) { msgs.clear(); chatSig = ''; renderChat(); if (myR && S.ph !== 'lobby') fxQ.push({ t:'myrole', r: myR }); }
+    lastG = S.g; myRoleSeen = myR;
+  } else if (myR && myRoleSeen && myR !== myRoleSeen && S.ph !== 'end' && S.ph !== 'lobby') { fxQ.push({ t:'myrole', r: myR, ch: 1 }); myRoleSeen = myR; }
+  else if (myR && !myRoleSeen) myRoleSeen = myR;
   const id = S.fx ? S.fx.id : 0;
   const pk = S.ph + ':' + S.r + ':' + (S.vn || '');
   if (seenFx === undefined) { seenFx = id; lastPhKey = pk; return; }
@@ -1729,6 +1765,34 @@ async function runFx(it, ov, tok){
       await sleep(900, tok);
       await reveal(ov, S, d, tok);
     }
+  } else if (it.t === 'myrole') {
+    const RO = ROLES[it.r] || ROLES.villager, t = RO.team;
+    ov.innerHTML = `<div class="fx-stage reveal-stage tc-${t}"><div class="fx-eyebrow">${it.ch ? 'บทบาทของคุณเปลี่ยนไป' : 'บทบาทของคุณในเกมนี้'}</div>
+      <div class="rv-wrap"><div class="rv-glow"></div><div class="rv-rays"></div><div class="rv-ring"></div><div class="rv-ring r2"></div>
+        <div class="c3d rv-card" tabindex="0" role="button" aria-label="แตะเพื่อเปิดการ์ดบทบาท"><div class="in"><div class="face back"><span>คืนหมาป่า</span></div>
+        <div class="face front tc-${t}"><div class="big">${TICON[t]}</div><h3>${RO.th}</h3><span class="tm">${TEAM[t].th}</span><p class="rv-desc">${RO.desc}</p></div></div></div></div>
+      <p class="rv-hint">แตะการ์ดเพื่อเปิด · ระวังคนข้างๆ แอบดู</p><button class="btn-main" id="rvOk" hidden>เข้าใจแล้ว</button></div>`;
+    sfx('hum');
+    const card = ov.querySelector('.rv-card'), wrap = ov.querySelector('.rv-wrap');
+    await new Promise(res => {
+      let done = false, finished = false;
+      const end = () => { if (!finished) { finished = true; clearInterval(chk); res(); } };
+      const chk = setInterval(() => { if (tok !== fxTok) end(); }, 200);
+      const flip = () => {
+        if (done || tok !== fxTok) return; done = true;
+        card.querySelector('.in').classList.add('flip'); wrap.classList.add('open');
+        for (let i = 0; i < 34; i++) { const sp = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 130 + Math.random() * 120;
+          sp.className = 'spark'; sp.style.setProperty('--x', Math.cos(a) * d + 'px'); sp.style.setProperty('--y', Math.sin(a) * d + 'px'); sp.style.setProperty('--d', (.7 + Math.random() * .6) + 's');
+          wrap.appendChild(sp); setTimeout(() => sp.remove(), 1500); }
+        sfx('reveal_' + t);
+        const hint = ov.querySelector('.rv-hint'); if (hint) hint.hidden = true;
+        const ok = $('#rvOk'); if (ok) { ok.hidden = false; ok.onclick = end; setTimeout(() => ok.focus(), 600); }
+        setTimeout(end, 9000);
+      };
+      card.onclick = flip;
+      card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } };
+      setTimeout(() => { if (!done) end(); }, 15000);
+    });
   } else if (it.t === 'end') {
     const W = { v:['ชาวบ้านชนะ','กำจัดตัวร้ายได้หมดแล้ว','v'], w:['หมาป่าชนะ','ฝูงหมาป่ายึดหมู่บ้านได้','w'], s:['ฆาตกรชนะ','รอดเป็นคนสุดท้าย','s'], t:['คนบ้าคนผีทะเลชนะ','ถูกประหารได้สมใจ','s'],
       l:['คู่รักชนะ','รอดด้วยกันเป็น 2 คนสุดท้าย','s'], c:['ลัทธิชนะ','ทั้งหมู่บ้านเข้าลัทธิแล้ว','s'], lone:['หมาป่าเดียวดายชนะ','ครองหมู่บ้านไว้คนเดียว','w'] }[it.w] || ['จบเกม','','v'];
