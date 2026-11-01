@@ -38,7 +38,7 @@ button:focus-visible,input:focus-visible,.seat:focus-visible{outline:2px solid v
 .btn-main:hover:not(:disabled){filter:brightness(1.08);border-color:var(--lantern)}
 .btn-ghost{background:transparent}
 .btn-sm{padding:5px 11px;font-size:13px;border-radius:8px}
-input[type=text]{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+input[type=text],input[type=password]{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
 .label{font-size:12px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
 .muted{color:var(--dim)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -457,10 +457,13 @@ body.lite .fx{background:rgba(4,5,12,.94)}
     </section>
     <section>
       <h3>AI บอท (ตั้งที่เครื่องโฮสต์)</h3>
-      <div class="hint">บอทคุย กล่าวหา แก้ตัว และหมาป่าบอทหลอกอ้างบทบาทได้อยู่แล้วโดยไม่ต้องตั้งค่า ถ้าอยากให้บอทคุยเป็นธรรมชาติและตอบโต้ได้ฉลาดขึ้น ใส่ Claude API key ของคุณเองได้ คิดค่าใช้จ่ายตามการใช้จริงในบัญชี Anthropic Console ของคุณ key เก็บในเครื่องนี้เท่านั้นและส่งตรงไปที่ Anthropic ไม่ส่งให้เพื่อน</div>
-      <label class="chk"><input type="checkbox" id="aiOn"> ให้บอทคุยด้วย Claude</label>
-      <input type="password" id="aiKey" placeholder="API key (sk-ant-…)" autocomplete="off">
-      <select id="aiModel" aria-label="รุ่นของ Claude"><option value="claude-haiku-5-5">Claude Haiku 5.5 · เร็ว ประหยัด</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 · ฉลาดกว่า</option></select>
+      <div class="hint">บอทคุย กล่าวหา แก้ตัว และหมาป่าบอทหลอกอ้างบทบาทได้อยู่แล้วโดยไม่ต้องตั้งค่า ถ้าอยากให้บอทอ่านแชทจริงและคิดคำตอบเอง ใส่ API key ของผู้ให้บริการ AI ด้านล่าง key เก็บในเครื่องนี้เท่านั้นและส่งตรงไปที่ผู้ให้บริการ ไม่ส่งให้เพื่อน ถ้าเรียกไม่ได้หรือโควตาเต็ม บอทจะกลับไปพูดแบบปกติเอง</div>
+      <label class="chk"><input type="checkbox" id="aiOn"> ให้บอทคุยด้วย AI จริง</label>
+      <select id="aiProv" aria-label="ผู้ให้บริการ AI"><option value="gemini">Google Gemini · ฟรี (แนะนำ)</option><option value="groq">Groq · ฟรี เร็วมาก</option><option value="claude">Claude · เสียเงิน ฉลาดสุด</option></select>
+      <div class="hint" id="aiHow"></div>
+      <input type="password" id="aiKey" placeholder="วาง API key ที่นี่" autocomplete="off">
+      <input type="text" id="aiModel" placeholder="รุ่น" autocomplete="off" aria-label="ชื่อรุ่นของโมเดล">
+      <div><button type="button" class="btn-sm" id="aiTest">ทดสอบการเชื่อมต่อ</button></div>
     </section>
     <section>
       <details><summary class="label" style="cursor:pointer">ขั้นสูง: เซิร์ฟเวอร์ TURN</summary>
@@ -1296,7 +1299,7 @@ async function llmLine(st, b, info){
   if (isPack(rb) || rb === 'minion') secret.push('เพื่อนหมาป่า: ' + al.filter(x => x !== b && isPack(st.R[x])).map(N).join(', '));
   (st.sr || []).filter(e => e[4] === b).forEach(e => secret.push(`คืน ${e[0]} คุณส่อง ${N(e[2])}: ${e[1]==='s' ? (e[3] ? 'เป็นหมาป่า' : 'ไม่ใช่หมาป่า') : e[1]==='a' ? (e[3] ? 'มีบทบาทพิเศษ' : 'ไม่มีบทบาทพิเศษ') : e[1]==='o' ? (e[3] ? 'เป็นผู้หยั่งรู้' : 'ไม่ใช่ผู้หยั่งรู้') : (e[3] ? 'มีหมาป่าใกล้ๆ' : 'ไม่มีหมาป่าใกล้ๆ')}`));
   const dead = st.P.filter(p => !st.A[p.i]).map(p => `${p.n} (${roleTh(st.R[p.i])})`).join(', ') || '-';
-  const chat = chatLog.filter(m => m.ch === 'v').slice(-20).map(m => `${m.n}: ${m.txt}`).join('\n') || '(ยังไม่มีใครพูด)';
+  const chat = chatLog.filter(m => m.ch === 'v').slice(-12).map(m => `${m.n}: ${m.txt}`).join('\n') || '(ยังไม่มีใครพูด)';
   const votes = BRAIN.votes.slice(-2).map(v => `วัน ${v.r}: ` + Object.entries(v.acts).map(([a, t]) => `${N(a)}→${t==='x' ? 'งด' : N(t)}`).join(', ')).join('\n') || '-';
   const team = ROLES[rb].team === 'w' ? 'ฝ่ายหมาป่า: ห้ามเปิดเผยตัวเด็ดขาด ให้แนบเนียน โยนความสงสัยไปที่ชาวบ้าน อาจอ้างตัวเป็นบทบาทอื่นได้' : ROLES[rb].team === 's' ? 'ฝ่ายตัวเอง: ทำทุกอย่างเพื่อให้ตัวเองชนะ' : 'ฝ่ายชาวบ้าน: หาตัวหมาป่าจากเหตุผล การโหวต และคำพูดที่ขัดกัน';
   const prompt = `คุณคือ "${N(b)}" ผู้เล่นในเกมมนุษย์หมาป่า ตอนนี้วันที่ ${st.r} ช่วงคุยกันก่อนโหวต
@@ -1311,18 +1314,56 @@ ${chat}
 
 ${info ? `ตอบกลับข้อความล่าสุดของ "${N(info.to)}" โดยตรง (เรียกชื่อเขา) จะเชื่อ สงสัย หรือถามต่อก็ได้ตามบทบาทของคุณ\n` : ''}พิมพ์ข้อความแชท 1 ข้อความแบบคนไทยคุยเล่นเกม สั้น เป็นกันเอง ไม่เกิน 90 ตัวอักษร ตอบโต้สิ่งที่คนอื่นพูดถ้ามี ห้ามบอกว่าตัวเองเป็น AI
 ตอบเป็น JSON เท่านั้น: {"say":"ข้อความ","suspect":"ชื่อผู้เล่นที่คุณจะโหวต หรือ \"\""}`;
-  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
+  const txt = await callLLM(prompt);
+  if (!txt) return null;
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', signal: ctl.signal,
-      headers: { 'content-type':'application/json', 'x-api-key': cfg.ai.key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: cfg.ai.model || 'claude-haiku-5-5', max_tokens: 200, messages: [{ role:'user', content: prompt }] }) });
-    if (!r.ok) { if (r.status === 401) toast('API key ของ AI บอทไม่ถูกต้อง'); return null; }
-    const j = await r.json(), txt = (j.content || []).map(c => c.text || '').join('');
     const mm = txt.match(/\{[\s\S]*\}/); if (!mm) return null;
     const o = JSON.parse(mm[0]);
     const sp = st.P.find(p => p.n && o.suspect && String(o.suspect).includes(p.n));
     if (sp && sp.i !== b) bmem(b).llmSus = sp.i;
-    return typeof o.say === 'string' ? o.say.replace(/[\u0000-\u001f]/g,' ').slice(0, 110) : null;
+    return typeof o.say === 'string' && o.say.trim() ? o.say.replace(/[\u0000-\u001f]/g,' ').slice(0, 110) : null;
+  } catch(e) { return null; }
+}
+/* one gate for all providers: spaces calls out so free-tier per-minute limits are not hit, backs off after a 429 */
+const AI_PROVIDERS = {
+  gemini: { name:'Google Gemini', model:'gemini-3.1-flash-lite', gap:4500 },
+  groq:   { name:'Groq', model:'llama-3.3-70b-versatile', gap:2200 },
+  claude: { name:'Claude', model:'claude-haiku-5-5', gap:800 }
+};
+const LLM = { next:0, errShown:0 };
+const aiReady = () => !!(cfg.ai && cfg.ai.on && cfg.ai.keys && cfg.ai.keys[cfg.ai.provider]);
+async function callLLM(prompt){
+  const pv = cfg.ai.provider, P = AI_PROVIDERS[pv], key = cfg.ai.keys[pv], model = (cfg.ai.models && cfg.ai.models[pv]) || P.model;
+  const now = Date.now(); if (now < LLM.next) return null;
+  LLM.next = now + P.gap;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
+  const fail = (r) => {
+    if (r && r.status === 429) { LLM.next = Date.now() + 30000; }
+    if (r && (r.status === 401 || r.status === 403 || r.status === 400) && Date.now() - LLM.errShown > 30000) { LLM.errShown = Date.now(); toast(`${P.name}: ใช้ API key หรือชื่อรุ่นนี้ไม่ได้ (รหัส ${r.status}) บอทจะพูดแบบปกติแทน`); }
+    return null;
+  };
+  try {
+    let r, txt = '';
+    if (pv === 'gemini') {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method:'POST', signal: ctl.signal,
+        headers: { 'content-type':'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ role:'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 600, temperature: 1, responseMimeType: 'application/json' } }) });
+      if (!r.ok) return fail(r);
+      const j = await r.json(); txt = ((j.candidates || [])[0]?.content?.parts || []).map(x => x.text || '').join('');
+    } else if (pv === 'groq') {
+      r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', signal: ctl.signal,
+        headers: { 'content-type':'application/json', 'authorization': 'Bearer ' + key },
+        body: JSON.stringify({ model, max_tokens: 300, temperature: 1, response_format: { type:'json_object' }, messages: [{ role:'user', content: prompt }] }) });
+      if (!r.ok) return fail(r);
+      const j = await r.json(); txt = (j.choices || [])[0]?.message?.content || '';
+    } else {
+      r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', signal: ctl.signal,
+        headers: { 'content-type':'application/json', 'x-api-key': key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({ model, max_tokens: 200, messages: [{ role:'user', content: prompt }] }) });
+      if (!r.ok) return fail(r);
+      const j = await r.json(); txt = (j.content || []).map(c => c.text || '').join('');
+    }
+    return txt || null;
   } catch(e) { return null; } finally { clearTimeout(to); }
 }
 /* ----- scheduling talk, typing indicators and readiness ----- */
@@ -1358,7 +1399,7 @@ function brainTick(st, now){
     for (const q of due) {
       BRAIN.replyQ.splice(BRAIN.replyQ.indexOf(q), 1);
       if (!st.A[q.b] || (q.ch === 'v' && st.ph !== 'day') || (q.ch === 'w' && st.ph !== 'night')) continue;
-      const b = q.b, useLlm = q.ch === 'v' && cfg.ai && cfg.ai.on && cfg.ai.key;
+      const b = q.b, useLlm = q.ch === 'v' && aiReady();
       BRAIN.typing[b] = 1;
       const send = txt => { delete BRAIN.typing[b]; delete BRAIN.llmBusy[b]; const S = myState; if (txt && S && S.A[b] && ((q.ch === 'v' && S.ph === 'day') || (q.ch === 'w' && S.ph === 'night'))) relayChat(b, q.ch, txt); refresh(); };
       if (useLlm) { BRAIN.llmBusy[b] = 1; llmLine(myState, b, q.info).then(t => send(t || replyLine(myState, b, q.info))); }
@@ -1374,7 +1415,7 @@ function brainTick(st, now){
       continue;
     }
     m.plan.shift();
-    const useLlm = cfg.ai && cfg.ai.on && cfg.ai.key;
+    const useLlm = aiReady();
     BRAIN.typing[b] = 1;
     const send = txt => { delete BRAIN.typing[b]; delete BRAIN.llmBusy[b]; const S = myState; if (txt && S && S.ph === 'day' && S.A[b]) { relayChat(b, 'v', txt); m.said++; } refresh(); };
     if (useLlm) { BRAIN.llmBusy[b] = 1; llmLine(myState, b).then(t => send(t || botLine(myState, b))); }
@@ -1980,8 +2021,8 @@ function renderVoiceUI(){
 })();
 
 /* ================= settings + sound ================= */
-let cfg = { mode:'open', key:'KeyM', vol:70, sfx:true, lite:false, mute:{}, pvol:{}, mic:'', out:'', turn:{ url:'', user:'', pass:'' }, ai:{ on:false, key:'', model:'claude-haiku-5-5' } };
-try { const c = JSON.parse(store('l','ww.cfg') || 'null'); if (c && typeof c === 'object') cfg = Object.assign(cfg, c, { mute: Object.assign({}, c.mute || {}), pvol: Object.assign({}, c.pvol || {}), turn: Object.assign({ url:'', user:'', pass:'' }, c.turn || {}), ai: Object.assign({ on:false, key:'', model:'claude-haiku-5-5' }, c.ai || {}) }); } catch(e){}
+let cfg = { mode:'open', key:'KeyM', vol:70, sfx:true, lite:false, mute:{}, pvol:{}, mic:'', out:'', turn:{ url:'', user:'', pass:'' }, ai:{ on:false, provider:'gemini', keys:{ gemini:'', groq:'', claude:'' }, models:{} } };
+try { const c = JSON.parse(store('l','ww.cfg') || 'null'); if (c && typeof c === 'object') cfg = Object.assign(cfg, c, { mute: Object.assign({}, c.mute || {}), pvol: Object.assign({}, c.pvol || {}), turn: Object.assign({ url:'', user:'', pass:'' }, c.turn || {}), ai: Object.assign({ on:false, provider:'gemini' }, c.ai || {}, { keys: Object.assign({ gemini:'', groq:'', claude:'' }, (c.ai && c.ai.keys) || {}, c.ai && c.ai.key ? { claude: c.ai.key } : {}), models: Object.assign({}, (c.ai && c.ai.models) || {}) }) }); delete cfg.ai.key; delete cfg.ai.model; if (!AI_PROVIDERS[cfg.ai.provider]) cfg.ai.provider = 'gemini'; } catch(e){}
 document.body.classList.toggle('lite', !!cfg.lite);
 if (!['open','ptt'].includes(cfg.mode)) cfg.mode = 'open';
 let binding = false;
@@ -2034,8 +2075,18 @@ function renderSettings(){
   $('#sfxTest').onclick = () => { audio(); sfx('night'); };
   $('#liteOn').checked = !!cfg.lite; $('#liteOn').onchange = () => { cfg.lite = $('#liteOn').checked; saveCfg(); };
   $('#aiOn').checked = !!cfg.ai.on; $('#aiOn').onchange = () => { cfg.ai.on = $('#aiOn').checked; saveCfg(); };
-  $('#aiKey').value = cfg.ai.key; $('#aiKey').onchange = () => { cfg.ai.key = $('#aiKey').value.trim(); saveCfg(); toast('บันทึก API key ไว้ในเครื่องนี้แล้ว'); };
-  $('#aiModel').value = cfg.ai.model; $('#aiModel').onchange = () => { cfg.ai.model = $('#aiModel').value; saveCfg(); };
+  const pv = cfg.ai.provider, P = AI_PROVIDERS[pv];
+  $('#aiProv').value = pv; $('#aiProv').onchange = () => { cfg.ai.provider = $('#aiProv').value; saveCfg(); renderSettings(); };
+  $('#aiKey').value = cfg.ai.keys[pv] || ''; $('#aiKey').onchange = () => { cfg.ai.keys[cfg.ai.provider] = $('#aiKey').value.trim(); saveCfg(); toast('บันทึก API key ไว้ในเครื่องนี้แล้ว'); };
+  $('#aiModel').value = (cfg.ai.models[pv]) || ''; $('#aiModel').placeholder = 'รุ่น (เว้นว่าง = ' + P.model + ')';
+  $('#aiModel').onchange = () => { const v = $('#aiModel').value.trim(); if (v) cfg.ai.models[cfg.ai.provider] = v; else delete cfg.ai.models[cfg.ai.provider]; saveCfg(); };
+  $('#aiHow').innerHTML = { gemini:'ฟรี: สร้าง key ที่ <b>aistudio.google.com/apikey</b> (ใช้บัญชี Google ไม่ต้องผูกบัตร) ภาษาไทยดีที่สุดในกลุ่มฟรี แต่ฝั่ง Google อาจนำข้อความไปพัฒนาโมเดล',
+    groq:'ฟรี: สร้าง key ที่ <b>console.groq.com/keys</b> (ไม่ต้องผูกบัตร) ตอบเร็วมาก แต่ภาษาไทยด้อยกว่า Gemini',
+    claude:'เสียเงินตามการใช้จริง: สร้าง key ที่ <b>console.anthropic.com</b> ภาษาไทยและการเล่นบทบาทดีที่สุด' }[pv];
+  $('#aiTest').onclick = async () => { if (!cfg.ai.keys[cfg.ai.provider]) { toast('ใส่ API key ก่อน'); return; } $('#aiTest').disabled = true; $('#aiTest').textContent = 'กำลังทดสอบ…'; LLM.next = 0;
+    const t = await callLLM('ตอบเป็น JSON เท่านั้น: {"say":"ทักทายผู้เล่นเกมหมาป่าสั้นๆ เป็นภาษาไทย"}'); $('#aiTest').disabled = false; $('#aiTest').textContent = 'ทดสอบการเชื่อมต่อ';
+    let say = null; try { say = JSON.parse((t || '').match(/\{[\s\S]*\}/)[0]).say; } catch(e){}
+    toast(say ? 'เชื่อมต่อได้: ' + String(say).slice(0, 60) : 'เชื่อมต่อไม่สำเร็จ ตรวจ key หรือชื่อรุ่นอีกครั้ง'); };
   $('#turnUrl').value = cfg.turn.url; $('#turnUser').value = cfg.turn.user; $('#turnPass').value = cfg.turn.pass;
   const S = curS, list = S ? S.P.filter(p => p.i !== me.pid && !p.b) : [];
   $('#setPlayers').innerHTML = list.length ? list.map(p => { const v = cfg.pvol[p.i] ?? 100; return `<div class="pl-row"><div class="who"><span class="mini-av" style="background:hsl(${hue(p.i)} 55% 72%)">${esc([...p.n][0]||'?')}</span><span>${esc(p.n)}</span></div>
